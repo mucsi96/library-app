@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-loan-items-table
+      author: mucsi96
+      changes:
+        - createTable:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: barcode
+                  type: text
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: media_type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author
+                  type: text
+              - column:
+                  name: category
+                  type: text
+              - column:
+                  name: library
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: due_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: text
+              - column:
+                  name: completed
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

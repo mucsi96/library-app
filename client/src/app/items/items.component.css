@@ -1,0 +1,87 @@
+:host {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: var(--bt-text-strong);
+  margin-bottom: 1.5rem;
+}
+
+.empty {
+  color: var(--bt-text-muted);
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    color: var(--bt-text-muted);
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--bt-outline);
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--bt-outline);
+    color: var(--bt-text-default);
+    vertical-align: top;
+  }
+}
+
+.done-column {
+  text-align: center;
+}
+
+.due-cell {
+  white-space: nowrap;
+}
+
+.due-chip {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  background: color-mix(in srgb, var(--bt-text-default) 15%, transparent);
+  color: var(--bt-text-strong);
+}
+
+.due-chip-overdue {
+  background: color-mix(in srgb, #f44336 25%, transparent);
+  color: #ff8a80;
+}
+
+.title {
+  display: block;
+  color: var(--bt-text-strong);
+}
+
+.author {
+  display: block;
+  color: var(--bt-text-muted);
+  font-size: 0.85rem;
+}
+
+.note {
+  color: var(--bt-text-muted);
+  font-size: 0.85rem;
+}
+
+tr.completed td {
+  opacity: 0.5;
+}
+
+tr.completed .title {
+  text-decoration: line-through;
+}
+
+.page-loading {
+  display: flex;
+  justify-content: center;
+  margin: 150px auto;
+}

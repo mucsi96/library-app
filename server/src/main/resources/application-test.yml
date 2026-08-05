@@ -1,0 +1,13 @@
+spring:
+  cloud:
+    azure:
+      keyvault:
+        secret:
+          property-sources:
+            - enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8050/default
+          audiences: mock-api-client-id

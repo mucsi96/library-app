@@ -1,0 +1,52 @@
+@if (items.isLoading()) {
+<bt-bar-loader class="page-loading" label="Loading loans" />
+} @else {
+<h1>My loans</h1>
+@if (items.value()?.length === 0) {
+<p class="empty">
+  No items yet. <a routerLink="/import">Import your loans</a> to get started.
+</p>
+} @else {
+<table class="items-table">
+  <thead>
+    <tr>
+      <th>Due</th>
+      <th>Type</th>
+      <th>Title</th>
+      <th>Library</th>
+      <th>Note</th>
+      <th class="done-column">Done</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (item of items.value(); track item.id) {
+    <tr [class.completed]="item.completed">
+      <td class="due-cell">
+        {{ item.dueDate | date : 'dd.MM.yyyy' }}
+        @if (dueLabel(item); as label) {
+        <span class="due-chip" [class.due-chip-overdue]="isOverdue(item)">
+          {{ label }}
+        </span>
+        }
+      </td>
+      <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
+      <td>
+        <span class="title">{{ item.title }}</span>
+        @if (item.author) {
+        <span class="author">{{ item.author }}</span>
+        }
+      </td>
+      <td>{{ item.library }}</td>
+      <td class="note">{{ item.note }}</td>
+      <td class="done-column">
+        <mat-checkbox
+          [checked]="item.completed"
+          (change)="setCompleted(item, $event.checked)"
+          [aria-label]="completedLabel(item)"
+        />
+      </td>
+    </tr>
+    }
+  </tbody>
+</table>
+} }
