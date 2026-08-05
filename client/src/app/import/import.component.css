@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: var(--bt-text-strong);
+  margin-bottom: 0.5rem;
+}
+
+.hint {
+  color: var(--bt-text-muted);
+  margin-bottom: 2rem;
+}
+
+.paste-field {
+  width: 100%;
+}
+
+.no-items {
+  color: var(--bt-text-muted);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+
+  th {
+    text-align: left;
+    color: var(--bt-text-muted);
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--bt-outline);
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--bt-outline);
+    color: var(--bt-text-default);
+    vertical-align: top;
+  }
+}
+
+.import-button {
+  margin-bottom: 2rem;
+}

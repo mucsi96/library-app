@@ -1,0 +1,51 @@
+<h1>Import loans</h1>
+<p class="hint">
+  Open the loans page of your library account, copy the HTML of the loans
+  table and paste it below.
+</p>
+
+<mat-form-field appearance="outline" class="paste-field">
+  <mat-label>Loans page HTML</mat-label>
+  <textarea
+    matInput
+    rows="10"
+    [value]="html()"
+    (input)="onInput($event)"
+  ></textarea>
+</mat-form-field>
+
+@if (html() && parsedItems().length === 0) {
+<p role="alert" class="no-items">No loan items found in the pasted HTML.</p>
+} @if (parsedItems().length > 0) {
+<h2>{{ parsedItems().length }} item(s) found</h2>
+<table class="preview-table">
+  <thead>
+    <tr>
+      <th>Due</th>
+      <th>Type</th>
+      <th>Title</th>
+      <th>Author</th>
+      <th>Library</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (item of parsedItems(); track item.barcode) {
+    <tr>
+      <td>{{ item.dueDate | date : 'dd.MM.yyyy' }}</td>
+      <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
+      <td>{{ item.title }}</td>
+      <td>{{ item.author }}</td>
+      <td>{{ item.library }}</td>
+    </tr>
+    }
+  </tbody>
+</table>
+<button
+  mat-flat-button
+  class="import-button"
+  [disabled]="importing()"
+  (click)="importItems()"
+>
+  Import {{ parsedItems().length }} item(s)
+</button>
+}
