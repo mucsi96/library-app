@@ -65,15 +65,16 @@ export class AuthService {
     console.info(
       '[auth] Full re-authentication started (redirect to authority)'
     );
-    // Await pending logs reaching the backend before navigating away.
     // The requested in-app URL travels as OIDC state - redirect_uri is always
     // the origin (the only registered one), so without it a deep link like
-    // /import would land on / after the round trip to the authority.
+    // /import would land on / after the round trip to the authority. Captured
+    // synchronously: by the time the deferred redirect below runs, the router
+    // has already cancelled the guarded navigation and reset the URL to /.
+    const returnTo = window.location.pathname + window.location.search;
+    // Await pending logs reaching the backend before navigating away.
     flushFaro().finally(() => {
       this.userManager
-        .signinRedirect({
-          state: window.location.pathname + window.location.search,
-        })
+        .signinRedirect({ state: returnTo })
         .catch((error) =>
           console.error(
             '[auth] signinRedirect failed',
