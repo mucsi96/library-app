@@ -66,13 +66,20 @@ export class AuthService {
       '[auth] Full re-authentication started (redirect to authority)'
     );
     // Await pending logs reaching the backend before navigating away.
+    // The requested in-app URL travels as OIDC state - redirect_uri is always
+    // the origin (the only registered one), so without it a deep link like
+    // /import would land on / after the round trip to the authority.
     flushFaro().finally(() => {
-      this.userManager.signinRedirect().catch((error) =>
-        console.error(
-          '[auth] signinRedirect failed',
-          JSON.stringify({ error: errorMessage(error) })
-        )
-      );
+      this.userManager
+        .signinRedirect({
+          state: window.location.pathname + window.location.search,
+        })
+        .catch((error) =>
+          console.error(
+            '[auth] signinRedirect failed',
+            JSON.stringify({ error: errorMessage(error) })
+          )
+        );
     });
   }
 
@@ -229,9 +236,13 @@ export class AuthService {
       url.searchParams.has('code') || url.searchParams.has('error');
 
     if (this.returnedFromAuthority) {
+      let returnTo = url.pathname;
       try {
         const user = await this.userManager.signinRedirectCallback();
         this.user.set(user);
+        if (typeof user.state === 'string' && user.state.startsWith('/')) {
+          returnTo = user.state;
+        }
         console.info(
           '[auth] Cold start - redirect callback processed',
           JSON.stringify({ ...describeUser(user), storage: snapshotStorageKeys() })
@@ -250,8 +261,10 @@ export class AuthService {
           JSON.stringify({ error: errorMessage(error), description })
         );
       }
-      // Strip the auth params so refreshes and deep links stay clean.
-      history.replaceState(history.state, '', url.origin + url.pathname);
+      // Strip the auth params and restore the URL requested before the
+      // redirect (carried through OIDC state) - this runs before the router
+      // bootstraps, so the router activates the restored route.
+      history.replaceState(history.state, '', url.origin + returnTo);
       return;
     }
 
