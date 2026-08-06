@@ -1,3 +1,5 @@
+storage:
+  directory: ./storage
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5450/library

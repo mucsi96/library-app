@@ -1,20 +1,18 @@
 import { test as base, TestInfo } from '@playwright/test';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { cleanupDb } from './utils';
+import { cleanupDb, cleanupStorage } from './utils';
 
 export const test = base.extend({
   page: async ({ page }, use, testInfo: TestInfo) => {
     await cleanupDb();
+    cleanupStorage();
 
-    // Keep tests hermetic: Google Books lookups find nothing unless a test
-    // registers its own (later, thus higher-priority) route.
-    await page.route('https://www.googleapis.com/books/v1/volumes*', (route) =>
-      route.fulfill({
-        json: {},
-        headers: { 'Access-Control-Allow-Origin': '*' },
-      })
-    );
+    try {
+      await fetch('http://localhost:3070/reset', { method: 'POST' });
+    } catch (error) {
+      console.warn('Warning: Could not reset mock OpenAI server:', error);
+    }
 
     // Capture browser console logs
     const consoleLogs: string[] = [];

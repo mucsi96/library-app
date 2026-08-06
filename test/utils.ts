@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -8,17 +10,35 @@ const pool = new Pool({
   password: 'postgres',
 });
 
+// Mounted into the server container as /app/storage (see test-pod.yaml).
+export const STORAGE_DIR = path.join(__dirname, 'storage');
+
+// Solid color 10x10 PNGs, source: https://png-pixel.com
+// The mock OpenAI server keys its canned answers off these exact images
+// (see mock_openai_server/src/data.ts).
+export const IMAGES = {
+  bookFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVR42mP8/5/hPwMRgHFUIX0VAgAYyB3tBFoR2wAAAABJRU5ErkJggg==', // yellow
+  unreadableFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8AARIQB46hC+ioEAGX8E/cKr6qsAAAAAElFTkSuQmCC', // red
+  cdFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPj/n4EIwDiqkL4KAVIQE/f1/NxEAAAAAElFTkSuQmCC', // blue
+  generatedCover: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFElEQVR42mNk+A+ERADGUYX0VQgAXAYT9xTSUocAAAAASUVORK5CYII=', // green
+};
+
+/** File payload for setInputFiles, from one of the IMAGES constants. */
+export function photo(name: string, base64: string) {
+  return {
+    name,
+    mimeType: 'image/png',
+    buffer: Buffer.from(base64, 'base64'),
+  };
+}
+
 export interface TestLoanItem {
-  barcode: string;
+  isbn?: string;
   mediaType: 'BOOK' | 'CD';
   title: string;
   author?: string;
-  category?: string;
-  library: string;
+  library?: string;
   dueDate: string;
-  note?: string;
-  isbn?: string;
-  thumbnailUrl?: string;
   completed?: boolean;
 }
 
@@ -35,22 +55,40 @@ export async function cleanupDb() {
   await query('DELETE FROM library.loan_items');
 }
 
+export function cleanupStorage() {
+  fs.rmSync(path.join(STORAGE_DIR, 'thumbnails'), {
+    recursive: true,
+    force: true,
+  });
+}
+
+export function thumbnailPath(isbn: string): string {
+  return path.join(STORAGE_DIR, 'thumbnails', `${isbn}.jpg`);
+}
+
+export function writeThumbnail(isbn: string, image: Buffer) {
+  fs.mkdirSync(path.join(STORAGE_DIR, 'thumbnails'), { recursive: true });
+  fs.writeFileSync(thumbnailPath(isbn), image);
+}
+
+export function readThumbnail(isbn: string): Buffer | null {
+  return fs.existsSync(thumbnailPath(isbn))
+    ? fs.readFileSync(thumbnailPath(isbn))
+    : null;
+}
+
 export async function insertLoanItem(item: TestLoanItem) {
   await query(
     `INSERT INTO library.loan_items
-       (barcode, media_type, title, author, category, library, due_date, note, isbn, thumbnail_url, completed)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+       (isbn, media_type, title, author, library, due_date, completed)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
-      item.barcode,
+      item.isbn ?? null,
       item.mediaType,
       item.title,
       item.author ?? null,
-      item.category ?? null,
-      item.library,
+      item.library ?? null,
       item.dueDate,
-      item.note ?? null,
-      item.isbn ?? null,
-      item.thumbnailUrl ?? null,
       item.completed ?? false,
     ]
   );
@@ -59,7 +97,7 @@ export async function insertLoanItem(item: TestLoanItem) {
 export async function getLoanItems() {
   const result = await query(
     `SELECT *, to_char(due_date, 'YYYY-MM-DD') AS due_date_iso
-     FROM library.loan_items ORDER BY barcode`
+     FROM library.loan_items ORDER BY title`
   );
   return result.rows;
 }

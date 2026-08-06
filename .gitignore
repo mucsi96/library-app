@@ -1,3 +1,5 @@
 .kube/
 postgres-data/
 .direnv/
+test/storage/
+server/storage/

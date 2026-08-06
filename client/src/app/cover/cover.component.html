@@ -1,0 +1,11 @@
+@if (thumbnail.isLoading()) {
+<div class="cover cover-skeleton"></div>
+} @else if (thumbnail.value(); as url) {
+<img class="cover" [src]="url" [alt]="coverLabel()" />
+} @else {
+<div class="cover cover-placeholder">
+  <mat-icon aria-hidden="true">{{
+    item().mediaType === 'CD' ? 'album' : 'menu_book'
+  }}</mat-icon>
+</div>
+}

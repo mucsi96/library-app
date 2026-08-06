@@ -1,9 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
+import { CoverComponent } from '../cover/cover.component';
 import { ItemsService } from '../items.service';
 import { LoanItem, MediaType } from '../loan-item';
 import { daysUntilDue, dueLabel } from '../utils/due-label';
@@ -14,9 +14,9 @@ import { daysUntilDue, dueLabel } from '../utils/due-label';
   imports: [
     MatCheckboxModule,
     MatChipsModule,
-    MatIconModule,
     RouterLink,
     BarLoaderComponent,
+    CoverComponent,
   ],
   templateUrl: './items.component.html',
   styleUrl: './items.component.css',
@@ -29,7 +29,13 @@ export class ItemsComponent {
   readonly libraryFilter = signal<string | null>(null);
 
   readonly libraries = computed(() =>
-    [...new Set((this.items.value() ?? []).map((item) => item.library))].sort()
+    [
+      ...new Set(
+        (this.items.value() ?? [])
+          .map((item) => item.library)
+          .filter((library): library is string => library !== null)
+      ),
+    ].sort()
   );
 
   readonly filteredItems = computed(() =>
@@ -42,10 +48,6 @@ export class ItemsComponent {
 
   setCompleted(item: LoanItem, completed: boolean): void {
     this.itemsService.setCompleted(item.id, completed);
-  }
-
-  coverLabel(item: LoanItem): string {
-    return `Cover of "${item.title}"`;
   }
 
   completedLabel(item: LoanItem): string {

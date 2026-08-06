@@ -44,17 +44,25 @@
 Application for tracking books and CDs borrowed from libraries:
 - Loans list with due dates, overdue and due-soon reminders
 - Mark items as read (books) or listened (CDs) so they aren't borrowed again
-- Import loans by pasting the HTML of the library account's loans table
-  (rTable markup); items are matched by barcode, so re-imports refresh
-  loan details without duplicating items or losing the read/listened flag
-- Imports look items up on Google Books (client-side, best effort) to pull
-  ISBN and cover thumbnail; a stored ISBN is reused for exact lookups and
-  never overwritten with nothing, covers are shown in the loans list
+- Import a borrowed item by photographing its front and back (camera
+  capture input, so iPhone opens the photo app); GPT-5 extracts ISBN,
+  title, author, media type and library branch from the photos, and the
+  ISBN is validated (ISBN-10 converted, 978/979 prefix and check digit)
+  server-side
+- gpt-image-2 generates a cover thumbnail from the front photo with the
+  library markings (stickers, labels, barcodes) removed; it is stored on
+  disk as `{isbn13}.jpg`, served from an authenticated endpoint, and shown
+  in the loans list
+- Items are matched by ISBN, so re-imports refresh the due date without
+  duplicating items, losing the read/listened flag, or regenerating the
+  existing thumbnail
+- The due date is computed as import date + `loan-period-days` (28)
 
 ## Architecture
 
 - **client/** - Angular SPA with Material UI, MSAL authentication
 - **server/** - Spring Boot REST API with PostgreSQL
+- **mock_openai_server/** - Express mock of the OpenAI API for E2E tests
 - **test/** - Playwright E2E tests
 - **scripts/** - Build and deployment scripts
 - **.github/workflows/** - CI/CD pipelines
@@ -62,6 +70,7 @@ Application for tracking books and CDs borrowed from libraries:
 ## Key Technologies
 
 - Spring Boot 4, Java 21
+- Spring AI (GPT-5 vision extraction) + OpenAI Java SDK (gpt-image-2 edits)
 - Angular 22
 - PostgreSQL 17
 - Azure AD (MSAL) authentication
@@ -101,15 +110,20 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 - `GET /api/environment` - Client configuration (public)
 - `GET /api/items` - List loan items sorted by due date (authenticated)
-- `POST /api/items/import` - Upsert loan items by barcode (authenticated)
+- `POST /api/items/import` - Multipart upload of `front` and `back` photos;
+  extracts and validates the ISBN, generates the thumbnail, upserts the
+  item by ISBN (authenticated)
+- `GET /api/thumbnails/{isbn13}` - Cover thumbnail (JPEG, immutable cache,
+  authenticated)
 - `PUT /api/items/{id}/completed` - Mark an item as read/listened (authenticated)
 
 ## Data Model
 
-- **loan_items** (schema `library`) - One row per borrowed item: barcode
+- **loan_items** (schema `library`) - One row per borrowed item: ISBN-13
   (unique, import upsert key), media type (BOOK or CD), title, author,
-  category, library branch, due date, note, ISBN and cover thumbnail URL
-  (from Google Books), and the completed (read/listened) flag
+  library branch, due date, and the completed (read/listened) flag
+- Cover thumbnails live on disk (`storage.directory`, env
+  `STORAGE_DIRECTORY`) as `thumbnails/{isbn13}.jpg`, not in the database
 
 ## Authorization
 

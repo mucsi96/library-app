@@ -4,7 +4,7 @@
 <h1>My loans</h1>
 @if (items.value()?.length === 0) {
 <p class="empty">
-  No items yet. <a routerLink="/import">Import your loans</a> to get started.
+  No items yet. <a routerLink="/import">Import an item</a> to get started.
 </p>
 } @else {
 <div class="filters">
@@ -37,7 +37,6 @@
       <th>Type</th>
       <th>Title</th>
       <th>Library</th>
-      <th>Note</th>
       <th class="done-column">Done</th>
     </tr>
   </thead>
@@ -53,19 +52,7 @@
         </span>
       </td>
       <td class="cover-cell">
-        @if (item.thumbnailUrl) {
-        <img
-          class="cover"
-          [src]="item.thumbnailUrl"
-          [alt]="coverLabel(item)"
-        />
-        } @else {
-        <div class="cover cover-placeholder">
-          <mat-icon aria-hidden="true">{{
-            item.mediaType === 'CD' ? 'album' : 'menu_book'
-          }}</mat-icon>
-        </div>
-        }
+        <app-cover [item]="item" />
       </td>
       <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
       <td>
@@ -75,7 +62,6 @@
         }
       </td>
       <td>{{ item.library }}</td>
-      <td class="note">{{ item.note }}</td>
       <td class="done-column">
         <mat-checkbox
           [checked]="item.completed"

@@ -1,0 +1,25 @@
+.cover {
+  width: 44px;
+  height: 64px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bt-text-default) 10%, transparent);
+  color: var(--bt-text-muted);
+}
+
+.cover-skeleton {
+  background: color-mix(in srgb, var(--bt-text-default) 10%, transparent);
+  animation: cover-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cover-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}

@@ -1,25 +1,30 @@
 import { test, expect } from '../fixtures';
-import { daysFromToday, getLoanItems, insertLoanItem } from '../utils';
+import {
+  IMAGES,
+  daysFromToday,
+  getLoanItems,
+  insertLoanItem,
+  writeThumbnail,
+} from '../utils';
 
 test('shows empty state with a link to the import page', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('No items yet.')).toBeVisible();
-  await page.getByRole('link', { name: 'Import your loans' }).click();
-  await expect(page.getByRole('heading', { name: 'Import loans' })).toBeVisible();
+  await page.getByRole('link', { name: 'Import an item' }).click();
+  await expect(page.getByRole('heading', { name: 'Import item' })).toBeVisible();
 });
 
 test('lists borrowed items with due date, type and library', async ({ page }) => {
   await insertLoanItem({
-    barcode: '30001023264560',
+    isbn: '9783751300810',
     mediaType: 'BOOK',
     title: 'Kommissar Pfote. - 3. Schnüffel-Einsatz auf dem Schulhof',
     author: 'Kaja Reider',
     library: 'Sihlcity',
     dueDate: daysFromToday(12),
-    note: 'nicht verlängerbar',
   });
   await insertLoanItem({
-    barcode: '30001020102858',
+    isbn: '9784257178293',
     mediaType: 'CD',
     title: 'Kei Angscht vor em Hotzeplotz',
     author: 'Otfried Preussler',
@@ -37,23 +42,20 @@ test('lists borrowed items with due date, type and library', async ({ page }) =>
   await expect(page.getByRole('cell', { name: 'CD', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Book', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Sihlcity' }).first()).toBeVisible();
-  await expect(page.getByText('nicht verlängerbar')).toBeVisible();
 });
 
 test('shows cover thumbnails with a placeholder for items without one', async ({
   page,
 }) => {
   await insertLoanItem({
-    barcode: '30001025647330',
+    isbn: '9783440153598',
     mediaType: 'BOOK',
     title: 'Die drei ??? Kids - Diebe im Tierpark',
     library: 'Sihlcity',
     dueDate: daysFromToday(12),
-    isbn: '9783440153598',
-    thumbnailUrl: 'https://books.google.com/books/content?id=abc',
   });
+  writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
   await insertLoanItem({
-    barcode: '30001020102858',
     mediaType: 'CD',
     title: 'Kei Angscht vor em Hotzeplotz',
     library: 'Sihlcity',
@@ -67,7 +69,7 @@ test('shows cover thumbnails with a placeholder for items without one', async ({
       name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
     })
   ).toBeVisible();
-  // The CD without a thumbnail gets no cover image, only a placeholder.
+  // The CD without an ISBN gets no cover image, only a placeholder.
   await expect(
     page.getByRole('img', { name: 'Cover of "Kei Angscht vor em Hotzeplotz"' })
   ).not.toBeVisible();
@@ -75,14 +77,14 @@ test('shows cover thumbnails with a placeholder for items without one', async ({
 
 test('filters items by type and library', async ({ page }) => {
   await insertLoanItem({
-    barcode: '30001023264560',
+    isbn: '9783751300810',
     mediaType: 'BOOK',
     title: 'Kommissar Pfote',
     library: 'Sihlcity',
     dueDate: daysFromToday(12),
   });
   await insertLoanItem({
-    barcode: '30001020102858',
+    isbn: '9784257178293',
     mediaType: 'CD',
     title: 'Kei Angscht vor em Hotzeplotz',
     library: 'Oerlikon',
@@ -115,7 +117,6 @@ test('filters items by type and library', async ({ page }) => {
 
 test('highlights overdue items', async ({ page }) => {
   await insertLoanItem({
-    barcode: '30001023264560',
     mediaType: 'BOOK',
     title: 'Overdue book',
     library: 'Sihlcity',
@@ -129,7 +130,6 @@ test('highlights overdue items', async ({ page }) => {
 
 test('shows a reminder for items due soon', async ({ page }) => {
   await insertLoanItem({
-    barcode: '30001023264560',
     mediaType: 'BOOK',
     title: 'Due soon book',
     library: 'Sihlcity',
@@ -143,7 +143,6 @@ test('shows a reminder for items due soon', async ({ page }) => {
 
 test('marks a book as read', async ({ page }) => {
   await insertLoanItem({
-    barcode: '30001023264560',
     mediaType: 'BOOK',
     title: 'Kommissar Pfote',
     library: 'Sihlcity',
@@ -169,7 +168,6 @@ test('marks a book as read', async ({ page }) => {
 
 test('marks a CD as listened and can undo it', async ({ page }) => {
   await insertLoanItem({
-    barcode: '30001020102858',
     mediaType: 'CD',
     title: 'Kei Angscht vor em Hotzeplotz',
     library: 'Sihlcity',

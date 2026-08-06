@@ -1,12 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject, resource } from '@angular/core';
-import {
-  ImportLoanItem,
-  ImportResult,
-  LoanItem,
-  ParsedLoanItem,
-} from './loan-item';
-import { fetchBookMetadata } from './utils/book-metadata';
+import { firstValueFrom } from 'rxjs';
+import { LoanItem } from './loan-item';
+import { SKIP_ERROR_NOTIFICATION } from './utils/error.interceptor';
 import { fetchJson } from './utils/fetchJson';
 
 @Injectable({
@@ -27,40 +23,23 @@ export class ItemsService {
     this.items.reload();
   }
 
-  async importItems(items: ParsedLoanItem[]): Promise<ImportResult> {
-    const enriched = await Promise.all(items.map((item) => this.enrich(item)));
-    const result = await fetchJson<ImportResult>(
-      this.http,
-      '/api/items/import',
-      {
-        method: 'post',
-        body: enriched,
-      }
+  /**
+   * Imports one borrowed item from photos of its front and back. The
+   * server extracts and validates the ISBN and generates a cover
+   * thumbnail with library markings removed.
+   */
+  async importItem(front: File, back: File): Promise<LoanItem> {
+    const photos = new FormData();
+    photos.append('front', front);
+    photos.append('back', back);
+    // Import failures surface inline on the import page instead of as a
+    // global notification.
+    const item = await firstValueFrom(
+      this.http.post<LoanItem>('/api/items/import', photos, {
+        context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true),
+      })
     );
     this.items.reload();
-    return result;
-  }
-
-  /**
-   * Pulls ISBN and cover thumbnail from Google Books. Metadata already
-   * stored for the item's barcode is reused instead of a new lookup.
-   */
-  private async enrich(item: ParsedLoanItem): Promise<ImportLoanItem> {
-    const existing = (this.items.value() ?? []).find(
-      ({ barcode }) => barcode === item.barcode
-    );
-
-    if (existing?.isbn && existing.thumbnailUrl) {
-      return {
-        ...item,
-        isbn: existing.isbn,
-        thumbnailUrl: existing.thumbnailUrl,
-      };
-    }
-
-    return {
-      ...item,
-      ...(await fetchBookMetadata(item, existing?.isbn ?? null)),
-    };
+    return item;
   }
 }

@@ -15,6 +15,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./import/import.component').then((m) => m.ImportComponent),
     canActivate: [authGuard],
-    title: 'Import loans',
+    title: 'Import item',
   },
 ];

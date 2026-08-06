@@ -1,51 +1,65 @@
-<h1>Import loans</h1>
+<h1>Import item</h1>
 <p class="hint">
-  Open the loans page of your library account, copy the HTML of the loans
-  table and paste it below.
+  Take a photo of the front and the back of the borrowed item. The ISBN is
+  read from the photos and a clean cover thumbnail is generated.
 </p>
 
-<mat-form-field appearance="outline" class="paste-field">
-  <mat-label>Loans page HTML</mat-label>
-  <textarea
-    matInput
-    rows="10"
-    [value]="html()"
-    (input)="onInput($event)"
-  ></textarea>
-</mat-form-field>
-
-@if (html() && parsedItems().length === 0) {
-<p role="alert" class="no-items">No loan items found in the pasted HTML.</p>
-} @if (parsedItems().length > 0) {
-<h2>{{ parsedItems().length }} item(s) found</h2>
-<table class="preview-table">
-  <thead>
-    <tr>
-      <th>Due</th>
-      <th>Type</th>
-      <th>Title</th>
-      <th>Author</th>
-      <th>Library</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (item of parsedItems(); track item.barcode) {
-    <tr>
-      <td>{{ dueLabel(item.dueDate) }}</td>
-      <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
-      <td>{{ item.title }}</td>
-      <td>{{ item.author }}</td>
-      <td>{{ item.library }}</td>
-    </tr>
+<div class="photos">
+  <div class="photo-box">
+    @if (previews().front; as preview) {
+    <img class="preview" [src]="preview" alt="Front photo preview" />
     }
-  </tbody>
-</table>
+    <button mat-flat-button (click)="frontInput.click()">
+      <mat-icon>photo_camera</mat-icon>
+      {{ previews().front ? 'Retake front photo' : 'Take front photo' }}
+    </button>
+    <input
+      #frontInput
+      type="file"
+      accept="image/*"
+      capture="environment"
+      class="photo-input"
+      aria-label="Front photo"
+      (change)="onPhotoTaken('front', $event)"
+    />
+  </div>
+
+  <div class="photo-box">
+    @if (previews().back; as preview) {
+    <img class="preview" [src]="preview" alt="Back photo preview" />
+    }
+    <button mat-flat-button (click)="backInput.click()">
+      <mat-icon>photo_camera</mat-icon>
+      {{ previews().back ? 'Retake back photo' : 'Take back photo' }}
+    </button>
+    <input
+      #backInput
+      type="file"
+      accept="image/*"
+      capture="environment"
+      class="photo-input"
+      aria-label="Back photo"
+      (change)="onPhotoTaken('back', $event)"
+    />
+  </div>
+</div>
+
+@if (error(); as message) {
+<p role="alert" class="import-error">{{ message }}</p>
+}
+
+@if (importing()) {
+<div class="importing">
+  <bt-bar-loader label="Importing item" />
+  <p>Reading the ISBN and generating the cover thumbnail…</p>
+</div>
+} @else {
 <button
   mat-flat-button
   class="import-button"
-  [disabled]="importing()"
-  (click)="importItems()"
+  [disabled]="!photos().front || !photos().back"
+  (click)="importItem()"
 >
-  Import {{ parsedItems().length }} item(s)
+  Import item
 </button>
 }

@@ -1,119 +1,42 @@
 import { test, expect } from '../fixtures';
-import { daysFromToday, getLoanItems, insertLoanItem } from '../utils';
+import {
+  IMAGES,
+  daysFromToday,
+  getLoanItems,
+  insertLoanItem,
+  photo,
+  readThumbnail,
+  writeThumbnail,
+} from '../utils';
 
-const DUE_DATE = daysFromToday(5); // yyyy-mm-dd
-const DUE_DATE_DISPLAY = DUE_DATE.split('-').reverse().join('.'); // dd.mm.yyyy
+const LOAN_PERIOD_DAYS = 28;
 
-const LOANS_TABLE_HTML = `
-<table class="rTable_table" id="resptable-1" width="100%" role="table">
-  <thead class="rTable_head" role="rowgroup">
-    <tr role="row">
-      <th scope="col" role="columnheader" class="rTable_th"><span class="invisible">Markieren</span></th>
-      <th scope="col" role="columnheader" class="rTable_th">Fällig am</th>
-      <th scope="col" role="columnheader" class="rTable_th">Bibliothek</th>
-      <th scope="col" role="columnheader" class="rTable_th">Titel</th>
-      <th scope="col" role="columnheader" class="rTable_th">Hinweis</th>
-    </tr>
-  </thead>
-  <tbody role="rowgroup">
-    <tr class=" rTable_tr_even " role="row">
-      <td class=" rTable_td_check" role="cell"><input type="checkbox" name="checkbox[]" value="CheckCell"></td>
-      <td class=" rTable_td_text" role="cell">${DUE_DATE_DISPLAY}</td>
-      <td class=" rTable_td_text" role="cell">Sihlcity</td>
-      <td class=" rTable_td_text" role="cell">[CD]<br> Kei Angscht vor em Hotzeplotz / Otfried Preussler ; [mit] Inigo Gallo, Vincenzo Biagi<br>Kinder-CD-Mundart ab 4<br>30001020102858</td>
-      <td class=" rTable_td_text" role="cell">verlängerbar - Stand 05.08.2026<br>verlängerbar - Stand 21.07.2026</td>
-    </tr>
-    <tr class=" rTable_tr_odd " role="row">
-      <td class=" rTable_td_check" role="cell"><input type="checkbox" name="checkbox[]" value="CheckCell_0"></td>
-      <td class=" rTable_td_text" role="cell">${DUE_DATE_DISPLAY}</td>
-      <td class=" rTable_td_text" role="cell">Sihlcity</td>
-      <td class=" rTable_td_text" role="cell">[Druckschrift]<br> ¬Die¬ drei ??? Kids - Diebe im Tierpark / von Anne Scheller<br>-DREI-J<br>30001025647330</td>
-      <td class=" rTable_td_text" role="cell">verlängerbar - Stand 05.08.2026<br>verlängerbar - Stand 21.07.2026</td>
-    </tr>
-  </tbody>
-</table>`;
-
-test('imports items from pasted library page HTML', async ({ page }) => {
+test('imports a book from front and back photos', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Import', exact: true }).click();
 
-  await page.getByLabel('Loans page HTML').fill(LOANS_TABLE_HTML);
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.bookFront));
+  await expect(page.getByAltText('Front photo preview')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Retake front photo' })
+  ).toBeVisible();
 
-  // Preview shows the parsed items before importing.
-  await expect(page.getByText('2 item(s) found')).toBeVisible();
-  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await expect(page.getByAltText('Back photo preview')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Import item' }).click();
+
+  // Lands on the loans list with the imported item and its generated cover.
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
   await expect(
     page.getByText('Die drei ??? Kids - Diebe im Tierpark')
   ).toBeVisible();
   await expect(page.getByText('Anne Scheller')).toBeVisible();
-  await expect(page.getByText('Due in 5 days').first()).toBeVisible();
-
-  await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
-
-  // Lands on the loans list with the imported items.
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
-  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
-  await expect(
-    page.getByText('Die drei ??? Kids - Diebe im Tierpark')
-  ).toBeVisible();
-  await expect(page.getByText('Due in 5 days').first()).toBeVisible();
-
-  const items = await getLoanItems();
-  expect(items).toHaveLength(2);
-  expect(items[0]).toMatchObject({
-    barcode: '30001020102858',
-    media_type: 'CD',
-    title: 'Kei Angscht vor em Hotzeplotz',
-    author: 'Otfried Preussler',
-    library: 'Sihlcity',
-    // The "verlängerbar - Stand ..." note is dropped as it is outdated instantly.
-    note: null,
-    completed: false,
-  });
-  expect(items[1]).toMatchObject({
-    barcode: '30001025647330',
-    media_type: 'BOOK',
-    title: 'Die drei ??? Kids - Diebe im Tierpark',
-    author: 'Anne Scheller',
-    category: '-DREI-J',
-  });
-});
-
-test('pulls ISBN and cover thumbnail from Google Books during import', async ({
-  page,
-}) => {
-  await page.route('https://www.googleapis.com/books/v1/volumes*', (route) => {
-    const query = new URL(route.request().url()).searchParams.get('q') ?? '';
-    const matchesBook = query.includes('Diebe im Tierpark');
-    return route.fulfill({
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      json: matchesBook
-        ? {
-            items: [
-              {
-                volumeInfo: {
-                  industryIdentifiers: [
-                    { type: 'ISBN_10', identifier: '3440153592' },
-                    { type: 'ISBN_13', identifier: '9783440153598' },
-                  ],
-                  imageLinks: {
-                    thumbnail:
-                      'http://books.google.com/books/content?id=abc&printsec=frontcover',
-                  },
-                },
-              },
-            ],
-          }
-        : {},
-    });
-  });
-
-  await page.goto('/import');
-  await page.getByLabel('Loans page HTML').fill(LOANS_TABLE_HTML);
-  await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
-
-  // The matched book shows its cover in the listing.
+  await expect(page.getByText(`Due in ${LOAN_PERIOD_DAYS} days`)).toBeVisible();
   await expect(
     page.getByRole('img', {
       name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
@@ -121,76 +44,101 @@ test('pulls ISBN and cover thumbnail from Google Books during import', async ({
   ).toBeVisible();
 
   const items = await getLoanItems();
-  // ISBN-13 is preferred and the thumbnail link is upgraded to https.
-  expect(items[1]).toMatchObject({
-    barcode: '30001025647330',
-    isbn: '9783440153598',
-    thumbnail_url:
-      'https://books.google.com/books/content?id=abc&printsec=frontcover',
-  });
-  // The unmatched CD imports fine without metadata.
+  expect(items).toHaveLength(1);
+  // The hyphenated ISBN read from the photos is normalized to ISBN-13.
   expect(items[0]).toMatchObject({
-    barcode: '30001020102858',
-    isbn: null,
-    thumbnail_url: null,
+    isbn: '9783440153598',
+    media_type: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    author: 'Anne Scheller',
+    library: 'Sihlcity',
+    completed: false,
   });
+  expect(items[0].due_date_iso).toBe(daysFromToday(LOAN_PERIOD_DAYS));
+
+  // The cleaned cover generated from the front photo is stored by ISBN-13.
+  expect(readThumbnail('9783440153598')).toEqual(
+    Buffer.from(IMAGES.generatedCover, 'base64')
+  );
 });
 
-test('re-importing keeps previously found ISBN and thumbnail when the lookup finds nothing', async ({
+test('imports a CD labelled with an ISBN-10', async ({ page }) => {
+  await page.goto('/import');
+
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.cdFront));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
+
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
+
+  const items = await getLoanItems();
+  // The ISBN-10 on the CD is converted to ISBN-13.
+  expect(items[0]).toMatchObject({
+    isbn: '9784257178293',
+    media_type: 'CD',
+    title: 'Kei Angscht vor em Hotzeplotz',
+    author: 'Otfried Preussler',
+    library: 'Oerlikon',
+  });
+  expect(readThumbnail('9784257178293')).toEqual(
+    Buffer.from(IMAGES.generatedCover, 'base64')
+  );
+});
+
+test('rejects photos when no valid ISBN is readable', async ({ page }) => {
+  await page.goto('/import');
+
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.unreadableFront));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
+
+  await expect(page.getByRole('alert')).toContainText(
+    'No valid ISBN found on the photos.'
+  );
+  // Stays on the import page and nothing is stored.
+  await expect(page.getByRole('heading', { name: 'Import item' })).toBeVisible();
+  expect(await getLoanItems()).toHaveLength(0);
+});
+
+test('re-importing an item refreshes the loan without duplicating or losing the read status', async ({
   page,
 }) => {
   await insertLoanItem({
-    barcode: '30001025647330',
+    isbn: '9783440153598',
     mediaType: 'BOOK',
     title: 'Die drei ??? Kids - Diebe im Tierpark',
     library: 'Sihlcity',
     dueDate: daysFromToday(-2),
-    isbn: '9783440153598',
-    thumbnailUrl: 'https://books.google.com/books/content?id=abc',
-  });
-
-  await page.goto('/import');
-  await page.getByLabel('Loans page HTML').fill(LOANS_TABLE_HTML);
-  await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
-
-  const items = await getLoanItems();
-  expect(items[1]).toMatchObject({
-    barcode: '30001025647330',
-    isbn: '9783440153598',
-    thumbnail_url: 'https://books.google.com/books/content?id=abc',
-  });
-  expect(items[1].due_date_iso).toBe(DUE_DATE);
-});
-
-test('re-importing updates existing items without duplicating or losing read status', async ({
-  page,
-}) => {
-  await insertLoanItem({
-    barcode: '30001020102858',
-    mediaType: 'CD',
-    title: 'Kei Angscht vor em Hotzeplotz',
-    library: 'Sihlcity',
-    dueDate: daysFromToday(-2),
     completed: true,
   });
+  // The item already has a thumbnail from its first import.
+  const existingThumbnail = Buffer.from(IMAGES.unreadableFront, 'base64');
+  writeThumbnail('9783440153598', existingThumbnail);
 
   await page.goto('/import');
-  await page.getByLabel('Loans page HTML').fill(LOANS_TABLE_HTML);
-  await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.bookFront));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
   await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
 
   const items = await getLoanItems();
-  expect(items).toHaveLength(2);
-  // The existing CD kept its listened status but got the renewed due date.
+  expect(items).toHaveLength(1);
+  // The book kept its read status but got a fresh due date.
   expect(items[0].completed).toBe(true);
-  expect(items[0].due_date_iso).toBe(DUE_DATE);
-});
-
-test('reports when no items can be parsed', async ({ page }) => {
-  await page.goto('/import');
-  await page.getByLabel('Loans page HTML').fill('<p>not a loans table</p>');
-  await expect(
-    page.getByText('No loan items found in the pasted HTML.')
-  ).toBeVisible();
+  expect(items[0].due_date_iso).toBe(daysFromToday(LOAN_PERIOD_DAYS));
+  // The existing thumbnail is reused instead of being regenerated.
+  expect(readThumbnail('9783440153598')).toEqual(existingThumbnail);
 });

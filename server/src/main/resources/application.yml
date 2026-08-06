@@ -1,4 +1,11 @@
+storage:
+  directory: ${STORAGE_DIRECTORY}
+loan-period-days: 28
 spring:
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 30MB
   datasource:
     url: ${db-url}
     username: ${db-username}
@@ -29,6 +36,12 @@ spring:
         jwt:
           issuer-uri: https://login.microsoftonline.com/${tenant-id:}/v2.0
           audiences: ${api-client-id:}
+  ai:
+    openai:
+      api-key: ${openai-api-key}
+      chat:
+        options:
+          model: gpt-5
 server:
   forward-headers-strategy: framework
   servlet:

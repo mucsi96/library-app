@@ -43,10 +43,19 @@ jobs:
           tags: localhost/library-app-client:test
           cache-from: type=gha,scope=client
           cache-to: type=gha,mode=max,scope=client
+      - name: Build mock OpenAI image
+        uses: docker/build-push-action@v6
+        with:
+          context: mock_openai_server
+          load: true
+          tags: localhost/library-app-mock-openai:test
+          cache-from: type=gha,scope=mock-openai
+          cache-to: type=gha,mode=max,scope=mock-openai
       - name: Load images into Podman
         run: |
           docker save localhost/library-app-server:test | podman load
           docker save localhost/library-app-client:test | podman load
+          docker save localhost/library-app-mock-openai:test | podman load
       - name: Setup test environment and start pod
         env:
           SKIP_BUILD: "1"
