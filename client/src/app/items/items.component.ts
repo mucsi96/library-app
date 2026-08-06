@@ -1,23 +1,37 @@
-import { Component, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { RouterLink } from '@angular/router';
 import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
 import { ItemsService } from '../items.service';
-import { LoanItem } from '../loan-item';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { LoanItem, MediaType } from '../loan-item';
+import { daysUntilDue, dueLabel } from '../utils/due-label';
 
 @Component({
   selector: 'app-items',
   standalone: true,
-  imports: [DatePipe, MatCheckboxModule, RouterLink, BarLoaderComponent],
+  imports: [MatCheckboxModule, MatChipsModule, RouterLink, BarLoaderComponent],
   templateUrl: './items.component.html',
   styleUrl: './items.component.css',
 })
 export class ItemsComponent {
   private readonly itemsService = inject(ItemsService);
   readonly items = this.itemsService.items;
+
+  readonly typeFilter = signal<MediaType | null>(null);
+  readonly libraryFilter = signal<string | null>(null);
+
+  readonly libraries = computed(() =>
+    [...new Set((this.items.value() ?? []).map((item) => item.library))].sort()
+  );
+
+  readonly filteredItems = computed(() =>
+    (this.items.value() ?? []).filter(
+      (item) =>
+        (!this.typeFilter() || item.mediaType === this.typeFilter()) &&
+        (!this.libraryFilter() || item.library === this.libraryFilter())
+    )
+  );
 
   setCompleted(item: LoanItem, completed: boolean): void {
     this.itemsService.setCompleted(item.id, completed);
@@ -28,30 +42,15 @@ export class ItemsComponent {
   }
 
   isOverdue(item: LoanItem): boolean {
-    return this.daysUntilDue(item) < 0;
+    return daysUntilDue(item.dueDate) < 0;
   }
 
-  dueLabel(item: LoanItem): string | null {
-    const days = this.daysUntilDue(item);
-
-    if (days < 0) {
-      return 'Overdue';
-    }
-    if (days === 0) {
-      return 'Due today';
-    }
-    if (days === 1) {
-      return 'Due tomorrow';
-    }
-    if (days <= 7) {
-      return `Due in ${days} days`;
-    }
-    return null;
+  isDueSoon(item: LoanItem): boolean {
+    const days = daysUntilDue(item.dueDate);
+    return days >= 0 && days <= 7;
   }
 
-  private daysUntilDue(item: LoanItem): number {
-    const today = new Date().setHours(0, 0, 0, 0);
-    const due = new Date(`${item.dueDate}T00:00:00`).getTime();
-    return Math.round((due - today) / DAY_MS);
+  dueLabel(item: LoanItem): string {
+    return dueLabel(item.dueDate);
   }
 }

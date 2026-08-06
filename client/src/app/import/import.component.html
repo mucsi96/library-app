@@ -31,7 +31,7 @@
   <tbody>
     @for (item of parsedItems(); track item.barcode) {
     <tr>
-      <td>{{ item.dueDate | date : 'dd.MM.yyyy' }}</td>
+      <td>{{ dueLabel(item.dueDate) }}</td>
       <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
       <td>{{ item.title }}</td>
       <td>{{ item.author }}</td>

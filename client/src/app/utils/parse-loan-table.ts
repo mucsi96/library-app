@@ -55,8 +55,14 @@ function parseRow(row: Element): ParsedLoanItem | null {
     category,
     library,
     dueDate,
-    note: cellLines(noteCell)[0] ?? null,
+    note: cellLines(noteCell).find((line) => !isStaleNote(line)) ?? null,
   };
+}
+
+// "verlängerbar - Stand 05.08.2026" notes are outdated the moment they are
+// imported, so they are not worth keeping.
+function isStaleNote(line: string): boolean {
+  return /\bStand \d{2}\.\d{2}\.\d{4}/.test(line);
 }
 
 function parseDueDate(text: string): string | null {

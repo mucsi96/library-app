@@ -1,5 +1,8 @@
 import { test, expect } from '../fixtures';
-import { getLoanItems, insertLoanItem } from '../utils';
+import { daysFromToday, getLoanItems, insertLoanItem } from '../utils';
+
+const DUE_DATE = daysFromToday(5); // yyyy-mm-dd
+const DUE_DATE_DISPLAY = DUE_DATE.split('-').reverse().join('.'); // dd.mm.yyyy
 
 const LOANS_TABLE_HTML = `
 <table class="rTable_table" id="resptable-1" width="100%" role="table">
@@ -15,14 +18,14 @@ const LOANS_TABLE_HTML = `
   <tbody role="rowgroup">
     <tr class=" rTable_tr_even " role="row">
       <td class=" rTable_td_check" role="cell"><input type="checkbox" name="checkbox[]" value="CheckCell"></td>
-      <td class=" rTable_td_text" role="cell">11.08.2026</td>
+      <td class=" rTable_td_text" role="cell">${DUE_DATE_DISPLAY}</td>
       <td class=" rTable_td_text" role="cell">Sihlcity</td>
       <td class=" rTable_td_text" role="cell">[CD]<br> Kei Angscht vor em Hotzeplotz / Otfried Preussler ; [mit] Inigo Gallo, Vincenzo Biagi<br>Kinder-CD-Mundart ab 4<br>30001020102858</td>
       <td class=" rTable_td_text" role="cell">verlängerbar - Stand 05.08.2026<br>verlängerbar - Stand 21.07.2026</td>
     </tr>
     <tr class=" rTable_tr_odd " role="row">
       <td class=" rTable_td_check" role="cell"><input type="checkbox" name="checkbox[]" value="CheckCell_0"></td>
-      <td class=" rTable_td_text" role="cell">11.08.2026</td>
+      <td class=" rTable_td_text" role="cell">${DUE_DATE_DISPLAY}</td>
       <td class=" rTable_td_text" role="cell">Sihlcity</td>
       <td class=" rTable_td_text" role="cell">[Druckschrift]<br> ¬Die¬ drei ??? Kids - Diebe im Tierpark / von Anne Scheller<br>-DREI-J<br>30001025647330</td>
       <td class=" rTable_td_text" role="cell">verlängerbar - Stand 05.08.2026<br>verlängerbar - Stand 21.07.2026</td>
@@ -43,6 +46,7 @@ test('imports items from pasted library page HTML', async ({ page }) => {
     page.getByText('Die drei ??? Kids - Diebe im Tierpark')
   ).toBeVisible();
   await expect(page.getByText('Anne Scheller')).toBeVisible();
+  await expect(page.getByText('Due in 5 days').first()).toBeVisible();
 
   await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
 
@@ -52,7 +56,7 @@ test('imports items from pasted library page HTML', async ({ page }) => {
   await expect(
     page.getByText('Die drei ??? Kids - Diebe im Tierpark')
   ).toBeVisible();
-  await expect(page.getByText('11.08.2026').first()).toBeVisible();
+  await expect(page.getByText('Due in 5 days').first()).toBeVisible();
 
   const items = await getLoanItems();
   expect(items).toHaveLength(2);
@@ -62,7 +66,8 @@ test('imports items from pasted library page HTML', async ({ page }) => {
     title: 'Kei Angscht vor em Hotzeplotz',
     author: 'Otfried Preussler',
     library: 'Sihlcity',
-    note: 'verlängerbar - Stand 05.08.2026',
+    // The "verlängerbar - Stand ..." note is dropped as it is outdated instantly.
+    note: null,
     completed: false,
   });
   expect(items[1]).toMatchObject({
@@ -82,7 +87,7 @@ test('re-importing updates existing items without duplicating or losing read sta
     mediaType: 'CD',
     title: 'Kei Angscht vor em Hotzeplotz',
     library: 'Sihlcity',
-    dueDate: '2026-07-28',
+    dueDate: daysFromToday(-2),
     completed: true,
   });
 
@@ -95,7 +100,7 @@ test('re-importing updates existing items without duplicating or losing read sta
   expect(items).toHaveLength(2);
   // The existing CD kept its listened status but got the renewed due date.
   expect(items[0].completed).toBe(true);
-  expect(items[0].due_date_iso).toBe('2026-08-11');
+  expect(items[0].due_date_iso).toBe(DUE_DATE);
 });
 
 test('reports when no items can be parsed', async ({ page }) => {
