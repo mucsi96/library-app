@@ -15,8 +15,8 @@ test('lists borrowed items with due date, type and library', async ({ page }) =>
     title: 'Kommissar Pfote. - 3. Schnüffel-Einsatz auf dem Schulhof',
     author: 'Kaja Reider',
     library: 'Sihlcity',
-    dueDate: '2099-08-11',
-    note: 'verlängerbar - Stand 05.08.2026',
+    dueDate: daysFromToday(12),
+    note: 'nicht verlängerbar',
   });
   await insertLoanItem({
     barcode: '30001020102858',
@@ -24,7 +24,7 @@ test('lists borrowed items with due date, type and library', async ({ page }) =>
     title: 'Kei Angscht vor em Hotzeplotz',
     author: 'Otfried Preussler',
     library: 'Sihlcity',
-    dueDate: '2099-08-11',
+    dueDate: daysFromToday(12),
   });
 
   await page.goto('/');
@@ -33,11 +33,51 @@ test('lists borrowed items with due date, type and library', async ({ page }) =>
     page.getByText('Kommissar Pfote. - 3. Schnüffel-Einsatz auf dem Schulhof')
   ).toBeVisible();
   await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
-  await expect(page.getByText('11.08.2099').first()).toBeVisible();
+  await expect(page.getByText('Due in 12 days').first()).toBeVisible();
   await expect(page.getByRole('cell', { name: 'CD', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Book', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Sihlcity' }).first()).toBeVisible();
-  await expect(page.getByText('verlängerbar - Stand 05.08.2026')).toBeVisible();
+  await expect(page.getByText('nicht verlängerbar')).toBeVisible();
+});
+
+test('filters items by type and library', async ({ page }) => {
+  await insertLoanItem({
+    barcode: '30001023264560',
+    mediaType: 'BOOK',
+    title: 'Kommissar Pfote',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+  });
+  await insertLoanItem({
+    barcode: '30001020102858',
+    mediaType: 'CD',
+    title: 'Kei Angscht vor em Hotzeplotz',
+    library: 'Oerlikon',
+    dueDate: daysFromToday(12),
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByText('Kommissar Pfote')).toBeVisible();
+  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
+
+  // Filter by type.
+  await page.getByRole('option', { name: 'CD' }).click();
+  await expect(page.getByText('Kommissar Pfote')).not.toBeVisible();
+  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
+
+  // Clicking again clears the filter.
+  await page.getByRole('option', { name: 'CD' }).click();
+  await expect(page.getByText('Kommissar Pfote')).toBeVisible();
+
+  // Filter by library.
+  await page.getByRole('option', { name: 'Sihlcity' }).click();
+  await expect(page.getByText('Kommissar Pfote')).toBeVisible();
+  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).not.toBeVisible();
+
+  // Combining both filters can match nothing.
+  await page.getByRole('option', { name: 'CD' }).click();
+  await expect(page.getByText('No items match the selected filters.')).toBeVisible();
 });
 
 test('highlights overdue items', async ({ page }) => {

@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -7,11 +6,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { ItemsService } from '../items.service';
 import { parseLoanTable } from '../utils/parse-loan-table';
+import { dueLabel } from '../utils/due-label';
 
 @Component({
   selector: 'app-import',
   standalone: true,
-  imports: [DatePipe, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [MatButtonModule, MatFormFieldModule, MatInputModule],
   templateUrl: './import.component.html',
   styleUrl: './import.component.css',
 })
@@ -23,6 +23,7 @@ export class ImportComponent {
   readonly html = signal('');
   readonly importing = signal(false);
   readonly parsedItems = computed(() => parseLoanTable(this.html()));
+  readonly dueLabel = dueLabel;
 
   onInput(event: Event): void {
     this.html.set((event.target as HTMLTextAreaElement).value);

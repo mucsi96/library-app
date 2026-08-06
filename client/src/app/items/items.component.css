@@ -41,9 +41,15 @@ h1 {
   white-space: nowrap;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
 .due-chip {
   display: inline-block;
-  margin-left: 0.5rem;
   padding: 0.1rem 0.5rem;
   border-radius: 1rem;
   font-size: 0.75rem;

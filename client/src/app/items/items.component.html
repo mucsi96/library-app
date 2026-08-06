@@ -7,6 +7,28 @@
   No items yet. <a routerLink="/import">Import your loans</a> to get started.
 </p>
 } @else {
+<div class="filters">
+  <mat-chip-listbox
+    aria-label="Filter by type"
+    [value]="typeFilter()"
+    (change)="typeFilter.set($event.value ?? null)"
+  >
+    <mat-chip-option value="BOOK">Book</mat-chip-option>
+    <mat-chip-option value="CD">CD</mat-chip-option>
+  </mat-chip-listbox>
+  <mat-chip-listbox
+    aria-label="Filter by library"
+    [value]="libraryFilter()"
+    (change)="libraryFilter.set($event.value ?? null)"
+  >
+    @for (library of libraries(); track library) {
+    <mat-chip-option [value]="library">{{ library }}</mat-chip-option>
+    }
+  </mat-chip-listbox>
+</div>
+@if (filteredItems().length === 0) {
+<p class="empty">No items match the selected filters.</p>
+} @else {
 <table class="items-table">
   <thead>
     <tr>
@@ -19,15 +41,15 @@
     </tr>
   </thead>
   <tbody>
-    @for (item of items.value(); track item.id) {
+    @for (item of filteredItems(); track item.id) {
     <tr [class.completed]="item.completed">
       <td class="due-cell">
-        {{ item.dueDate | date : 'dd.MM.yyyy' }}
-        @if (dueLabel(item); as label) {
-        <span class="due-chip" [class.due-chip-overdue]="isOverdue(item)">
-          {{ label }}
+        <span
+          [class.due-chip]="isDueSoon(item) || isOverdue(item)"
+          [class.due-chip-overdue]="isOverdue(item)"
+        >
+          {{ dueLabel(item) }}
         </span>
-        }
       </td>
       <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
       <td>
@@ -49,4 +71,4 @@
     }
   </tbody>
 </table>
-} }
+} } }
