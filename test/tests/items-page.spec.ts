@@ -40,6 +40,39 @@ test('lists borrowed items with due date, type and library', async ({ page }) =>
   await expect(page.getByText('nicht verlängerbar')).toBeVisible();
 });
 
+test('shows cover thumbnails with a placeholder for items without one', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    barcode: '30001025647330',
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+    isbn: '9783440153598',
+    thumbnailUrl: 'https://books.google.com/books/content?id=abc',
+  });
+  await insertLoanItem({
+    barcode: '30001020102858',
+    mediaType: 'CD',
+    title: 'Kei Angscht vor em Hotzeplotz',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+  });
+
+  await page.goto('/');
+
+  await expect(
+    page.getByRole('img', {
+      name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
+    })
+  ).toBeVisible();
+  // The CD without a thumbnail gets no cover image, only a placeholder.
+  await expect(
+    page.getByRole('img', { name: 'Cover of "Kei Angscht vor em Hotzeplotz"' })
+  ).not.toBeVisible();
+});
+
 test('filters items by type and library', async ({ page }) => {
   await insertLoanItem({
     barcode: '30001023264560',

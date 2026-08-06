@@ -7,6 +7,15 @@ export const test = base.extend({
   page: async ({ page }, use, testInfo: TestInfo) => {
     await cleanupDb();
 
+    // Keep tests hermetic: Google Books lookups find nothing unless a test
+    // registers its own (later, thus higher-priority) route.
+    await page.route('https://www.googleapis.com/books/v1/volumes*', (route) =>
+      route.fulfill({
+        json: {},
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    );
+
     // Capture browser console logs
     const consoleLogs: string[] = [];
     page.on('console', (msg) => {

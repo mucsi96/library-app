@@ -57,6 +57,14 @@ public class LoanItemService {
           existing.setLibrary(request.library());
           existing.setDueDate(request.dueDate());
           existing.setNote(request.note());
+          // Metadata lookups are best effort, so a missing value never
+          // erases previously found ISBN or thumbnail.
+          if (request.isbn() != null) {
+            existing.setIsbn(request.isbn());
+          }
+          if (request.thumbnailUrl() != null) {
+            existing.setThumbnailUrl(request.thumbnailUrl());
+          }
           loanItemRepository.save(existing);
           return false;
         })
@@ -70,6 +78,8 @@ public class LoanItemService {
               .library(request.library())
               .dueDate(request.dueDate())
               .note(request.note())
+              .isbn(request.isbn())
+              .thumbnailUrl(request.thumbnailUrl())
               .completed(false)
               .build());
           return true;
@@ -87,6 +97,8 @@ public class LoanItemService {
         item.getLibrary(),
         item.getDueDate(),
         item.getNote(),
+        item.getIsbn(),
+        item.getThumbnailUrl(),
         item.isCompleted());
   }
 }

@@ -53,3 +53,16 @@ databaseChangeLog:
                   defaultValueBoolean: false
                   constraints:
                     nullable: false
+  - changeSet:
+      id: 2-add-isbn-and-thumbnail-url
+      author: mucsi96
+      changes:
+        - addColumn:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: isbn
+                  type: text
+              - column:
+                  name: thumbnail_url
+                  type: text

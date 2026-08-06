@@ -10,6 +10,8 @@ export interface LoanItem {
   library: string;
   dueDate: string;
   note: string | null;
+  isbn: string | null;
+  thumbnailUrl: string | null;
   completed: boolean;
 }
 
@@ -23,6 +25,13 @@ export interface ParsedLoanItem {
   dueDate: string;
   note: string | null;
 }
+
+export interface BookMetadata {
+  isbn: string | null;
+  thumbnailUrl: string | null;
+}
+
+export type ImportLoanItem = ParsedLoanItem & BookMetadata;
 
 export interface ImportResult {
   created: number;

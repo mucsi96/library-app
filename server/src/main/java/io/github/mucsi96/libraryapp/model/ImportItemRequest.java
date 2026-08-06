@@ -14,5 +14,7 @@ public record ImportItemRequest(
     String category,
     @NotBlank String library,
     @NotNull LocalDate dueDate,
-    String note) {
+    String note,
+    String isbn,
+    String thumbnailUrl) {
 }

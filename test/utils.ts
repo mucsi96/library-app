@@ -17,6 +17,8 @@ export interface TestLoanItem {
   library: string;
   dueDate: string;
   note?: string;
+  isbn?: string;
+  thumbnailUrl?: string;
   completed?: boolean;
 }
 
@@ -36,8 +38,8 @@ export async function cleanupDb() {
 export async function insertLoanItem(item: TestLoanItem) {
   await query(
     `INSERT INTO library.loan_items
-       (barcode, media_type, title, author, category, library, due_date, note, completed)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+       (barcode, media_type, title, author, category, library, due_date, note, isbn, thumbnail_url, completed)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [
       item.barcode,
       item.mediaType,
@@ -47,6 +49,8 @@ export async function insertLoanItem(item: TestLoanItem) {
       item.library,
       item.dueDate,
       item.note ?? null,
+      item.isbn ?? null,
+      item.thumbnailUrl ?? null,
       item.completed ?? false,
     ]
   );

@@ -47,6 +47,9 @@ Application for tracking books and CDs borrowed from libraries:
 - Import loans by pasting the HTML of the library account's loans table
   (rTable markup); items are matched by barcode, so re-imports refresh
   loan details without duplicating items or losing the read/listened flag
+- Imports look items up on Google Books (client-side, best effort) to pull
+  ISBN and cover thumbnail; a stored ISBN is reused for exact lookups and
+  never overwritten with nothing, covers are shown in the loans list
 
 ## Architecture
 
@@ -105,8 +108,8 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 - **loan_items** (schema `library`) - One row per borrowed item: barcode
   (unique, import upsert key), media type (BOOK or CD), title, author,
-  category, library branch, due date, note, and the completed
-  (read/listened) flag
+  category, library branch, due date, note, ISBN and cover thumbnail URL
+  (from Google Books), and the completed (read/listened) flag
 
 ## Authorization
 
