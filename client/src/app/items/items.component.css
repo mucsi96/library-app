@@ -41,6 +41,21 @@ h1 {
   white-space: nowrap;
 }
 
+.cover {
+  width: 44px;
+  height: 64px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bt-text-default) 10%, transparent);
+  color: var(--bt-text-muted);
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;

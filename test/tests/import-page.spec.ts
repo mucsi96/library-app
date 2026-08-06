@@ -79,6 +79,90 @@ test('imports items from pasted library page HTML', async ({ page }) => {
   });
 });
 
+test('pulls ISBN and cover thumbnail from Google Books during import', async ({
+  page,
+}) => {
+  await page.route('https://www.googleapis.com/books/v1/volumes*', (route) => {
+    const query = new URL(route.request().url()).searchParams.get('q') ?? '';
+    const matchesBook = query.includes('Diebe im Tierpark');
+    return route.fulfill({
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      json: matchesBook
+        ? {
+            items: [
+              {
+                volumeInfo: {
+                  industryIdentifiers: [
+                    { type: 'ISBN_10', identifier: '3440153592' },
+                    { type: 'ISBN_13', identifier: '9783440153598' },
+                  ],
+                  imageLinks: {
+                    thumbnail:
+                      'http://books.google.com/books/content?id=abc&printsec=frontcover',
+                  },
+                },
+              },
+            ],
+          }
+        : {},
+    });
+  });
+
+  await page.goto('/import');
+  await page.getByLabel('Loans page HTML').fill(LOANS_TABLE_HTML);
+  await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+
+  // The matched book shows its cover in the listing.
+  await expect(
+    page.getByRole('img', {
+      name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
+    })
+  ).toBeVisible();
+
+  const items = await getLoanItems();
+  // ISBN-13 is preferred and the thumbnail link is upgraded to https.
+  expect(items[1]).toMatchObject({
+    barcode: '30001025647330',
+    isbn: '9783440153598',
+    thumbnail_url:
+      'https://books.google.com/books/content?id=abc&printsec=frontcover',
+  });
+  // The unmatched CD imports fine without metadata.
+  expect(items[0]).toMatchObject({
+    barcode: '30001020102858',
+    isbn: null,
+    thumbnail_url: null,
+  });
+});
+
+test('re-importing keeps previously found ISBN and thumbnail when the lookup finds nothing', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    barcode: '30001025647330',
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(-2),
+    isbn: '9783440153598',
+    thumbnailUrl: 'https://books.google.com/books/content?id=abc',
+  });
+
+  await page.goto('/import');
+  await page.getByLabel('Loans page HTML').fill(LOANS_TABLE_HTML);
+  await page.getByRole('button', { name: 'Import 2 item(s)' }).click();
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+
+  const items = await getLoanItems();
+  expect(items[1]).toMatchObject({
+    barcode: '30001025647330',
+    isbn: '9783440153598',
+    thumbnail_url: 'https://books.google.com/books/content?id=abc',
+  });
+  expect(items[1].due_date_iso).toBe(DUE_DATE);
+});
+
 test('re-importing updates existing items without duplicating or losing read status', async ({
   page,
 }) => {

@@ -45,6 +45,11 @@ public class LoanItem {
 
   private String note;
 
+  private String isbn;
+
+  @Column(name = "thumbnail_url")
+  private String thumbnailUrl;
+
   @Column(nullable = false)
   private boolean completed;
 }

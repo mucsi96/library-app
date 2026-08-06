@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
 import { ItemsService } from '../items.service';
@@ -10,7 +11,13 @@ import { daysUntilDue, dueLabel } from '../utils/due-label';
 @Component({
   selector: 'app-items',
   standalone: true,
-  imports: [MatCheckboxModule, MatChipsModule, RouterLink, BarLoaderComponent],
+  imports: [
+    MatCheckboxModule,
+    MatChipsModule,
+    MatIconModule,
+    RouterLink,
+    BarLoaderComponent,
+  ],
   templateUrl: './items.component.html',
   styleUrl: './items.component.css',
 })
@@ -35,6 +42,10 @@ export class ItemsComponent {
 
   setCompleted(item: LoanItem, completed: boolean): void {
     this.itemsService.setCompleted(item.id, completed);
+  }
+
+  coverLabel(item: LoanItem): string {
+    return `Cover of "${item.title}"`;
   }
 
   completedLabel(item: LoanItem): string {

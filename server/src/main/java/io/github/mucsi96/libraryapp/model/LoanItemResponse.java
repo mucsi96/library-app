@@ -12,5 +12,7 @@ public record LoanItemResponse(
     String library,
     LocalDate dueDate,
     String note,
+    String isbn,
+    String thumbnailUrl,
     boolean completed) {
 }

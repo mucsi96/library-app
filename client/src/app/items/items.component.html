@@ -33,6 +33,7 @@
   <thead>
     <tr>
       <th>Due</th>
+      <th>Cover</th>
       <th>Type</th>
       <th>Title</th>
       <th>Library</th>
@@ -50,6 +51,21 @@
         >
           {{ dueLabel(item) }}
         </span>
+      </td>
+      <td class="cover-cell">
+        @if (item.thumbnailUrl) {
+        <img
+          class="cover"
+          [src]="item.thumbnailUrl"
+          [alt]="coverLabel(item)"
+        />
+        } @else {
+        <div class="cover cover-placeholder">
+          <mat-icon aria-hidden="true">{{
+            item.mediaType === 'CD' ? 'album' : 'menu_book'
+          }}</mat-icon>
+        </div>
+        }
       </td>
       <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
       <td>
