@@ -11,3 +11,7 @@ spring:
         jwt:
           issuer-uri: http://localhost:8050/default
           audiences: mock-api-client-id
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: ${OPENAI_BASE_URL}

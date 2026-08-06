@@ -24,8 +24,8 @@ public class LoanItem {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, unique = true)
-  private String barcode;
+  @Column(unique = true)
+  private String isbn;
 
   @Column(name = "media_type", nullable = false)
   private String mediaType;
@@ -35,20 +35,10 @@ public class LoanItem {
 
   private String author;
 
-  private String category;
-
-  @Column(nullable = false)
   private String library;
 
   @Column(name = "due_date", nullable = false)
   private LocalDate dueDate;
-
-  private String note;
-
-  private String isbn;
-
-  @Column(name = "thumbnail_url")
-  private String thumbnailUrl;
 
   @Column(nullable = false)
   private boolean completed;

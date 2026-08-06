@@ -11,9 +11,12 @@ out again. Based on the patterns from
   due-soon reminders
 - **Read / listened tracking** - Mark a book as read or a CD as listened;
   the flag survives re-imports so you know what not to borrow again
-- **HTML import** - Paste the HTML of your library account's loans table
-  (rTable markup) to import or refresh your loans; items are matched by
-  barcode so re-imports update due dates instead of creating duplicates
+- **Photo import** - Photograph the front and back of a borrowed item
+  (on iPhone the camera opens directly); GPT-5 reads the ISBN, title,
+  author and library branch from the photos, and gpt-image-2 generates a
+  clean cover thumbnail with the library markings removed. Items are
+  matched by ISBN so re-imports refresh due dates instead of creating
+  duplicates
 
 ## Patterns Covered
 
@@ -24,6 +27,9 @@ out again. Based on the patterns from
 - **Authentication** - Azure AD (MSAL) with conditional mock auth for testing
 - **Configuration** - Azure Key Vault + Spring profiles (prod/local/test)
 - **Database** - PostgreSQL with Spring Data JPA
+- **AI integration** - OpenAI GPT-5 (vision) via Spring AI and
+  gpt-image-2 via the official OpenAI Java SDK, with a mock OpenAI server
+  for tests
 - **Testing** - Playwright E2E tests
 
 ## Port Mapping
@@ -35,6 +41,7 @@ All host-exposed ports use the **xx50–xx59** range for their last two digits t
 | 4250 | Angular dev server   | Local dev                           |
 | 5450 | PostgreSQL           | Dev database                        |
 | 5451 | PostgreSQL           | Test pod                            |
+| 3070 | Mock OpenAI server   | Test pod                            |
 | 8050 | Mock OAuth2 provider | Test pod                            |
 | 8053 | Spring Boot server   | Local dev (VSCode)                  |
 | 8054 | Spring Boot server   | Test pod (internal, behind Traefik) |

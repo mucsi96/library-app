@@ -66,3 +66,26 @@ databaseChangeLog:
               - column:
                   name: thumbnail_url
                   type: text
+  - changeSet:
+      id: 3-photo-import
+      author: mucsi96
+      changes:
+        - dropColumn:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: barcode
+              - column:
+                  name: category
+              - column:
+                  name: note
+              - column:
+                  name: thumbnail_url
+        - dropNotNullConstraint:
+            tableName: loan_items
+            columnName: library
+            columnDataType: text
+        - addUniqueConstraint:
+            tableName: loan_items
+            columnNames: isbn
+            constraintName: uq_loan_items_isbn

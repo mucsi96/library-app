@@ -1,15 +1,17 @@
 package io.github.mucsi96.libraryapp.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import io.github.mucsi96.libraryapp.entity.LoanItem;
-import io.github.mucsi96.libraryapp.model.ImportItemRequest;
-import io.github.mucsi96.libraryapp.model.ImportResult;
+import io.github.mucsi96.libraryapp.model.ExtractedItem;
 import io.github.mucsi96.libraryapp.model.LoanItemResponse;
 import io.github.mucsi96.libraryapp.repository.LoanItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LoanItemService {
   private final LoanItemRepository loanItemRepository;
+  private final ItemExtractionService itemExtractionService;
+  private final ThumbnailService thumbnailService;
+
+  @Value("${loan-period-days}")
+  private int loanPeriodDays;
 
   public List<LoanItemResponse> getItems() {
     return loanItemRepository.findAllByOrderByDueDateAscTitleAsc().stream()
@@ -25,15 +32,22 @@ public class LoanItemService {
         .toList();
   }
 
-  @Transactional
-  public ImportResult importItems(List<ImportItemRequest> items) {
-    List<Boolean> results = items.stream()
-        .map(this::upsertItem)
-        .toList();
+  /**
+   * Imports one borrowed item from its front and back photos: GPT extracts
+   * the bibliographic data, the ISBN is validated, a cleaned cover
+   * thumbnail is generated, and the item is upserted by ISBN so a
+   * re-borrowed item refreshes its loan without losing the completed flag.
+   */
+  public LoanItemResponse importItem(MultipartFile front, MultipartFile back) {
+    ExtractedItem extracted = itemExtractionService.extract(front, back);
 
-    int created = (int) results.stream().filter(isNew -> isNew).count();
+    String isbn13 = IsbnValidator.toIsbn13(extracted.isbn())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "No valid ISBN found on the photos. Retake them with the barcode on the back clearly visible."));
 
-    return new ImportResult(created, results.size() - created);
+    thumbnailService.ensureThumbnail(isbn13, front);
+
+    return toResponse(upsertItem(isbn13, extracted));
   }
 
   @Transactional
@@ -46,59 +60,38 @@ public class LoanItemService {
     return toResponse(loanItemRepository.save(item));
   }
 
-  /** Inserts a new item or refreshes loan details on the existing one, returns true when the item was new. */
-  private boolean upsertItem(ImportItemRequest request) {
-    return loanItemRepository.findByBarcode(request.barcode())
+  private LoanItem upsertItem(String isbn13, ExtractedItem extracted) {
+    LocalDate dueDate = LocalDate.now().plusDays(loanPeriodDays);
+
+    return loanItemRepository.save(loanItemRepository.findByIsbn(isbn13)
         .map(existing -> {
-          existing.setMediaType(request.mediaType());
-          existing.setTitle(request.title());
-          existing.setAuthor(request.author());
-          existing.setCategory(request.category());
-          existing.setLibrary(request.library());
-          existing.setDueDate(request.dueDate());
-          existing.setNote(request.note());
-          // Metadata lookups are best effort, so a missing value never
-          // erases previously found ISBN or thumbnail.
-          if (request.isbn() != null) {
-            existing.setIsbn(request.isbn());
-          }
-          if (request.thumbnailUrl() != null) {
-            existing.setThumbnailUrl(request.thumbnailUrl());
-          }
-          loanItemRepository.save(existing);
-          return false;
+          existing.setMediaType(extracted.mediaType());
+          existing.setTitle(extracted.title());
+          existing.setAuthor(extracted.author());
+          existing.setLibrary(extracted.library());
+          existing.setDueDate(dueDate);
+          return existing;
         })
-        .orElseGet(() -> {
-          loanItemRepository.save(LoanItem.builder()
-              .barcode(request.barcode())
-              .mediaType(request.mediaType())
-              .title(request.title())
-              .author(request.author())
-              .category(request.category())
-              .library(request.library())
-              .dueDate(request.dueDate())
-              .note(request.note())
-              .isbn(request.isbn())
-              .thumbnailUrl(request.thumbnailUrl())
-              .completed(false)
-              .build());
-          return true;
-        });
+        .orElseGet(() -> LoanItem.builder()
+            .isbn(isbn13)
+            .mediaType(extracted.mediaType())
+            .title(extracted.title())
+            .author(extracted.author())
+            .library(extracted.library())
+            .dueDate(dueDate)
+            .completed(false)
+            .build()));
   }
 
   private LoanItemResponse toResponse(LoanItem item) {
     return new LoanItemResponse(
         item.getId(),
-        item.getBarcode(),
+        item.getIsbn(),
         item.getMediaType(),
         item.getTitle(),
         item.getAuthor(),
-        item.getCategory(),
         item.getLibrary(),
         item.getDueDate(),
-        item.getNote(),
-        item.getIsbn(),
-        item.getThumbnailUrl(),
         item.isCompleted());
   }
 }

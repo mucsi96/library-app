@@ -14,33 +14,42 @@ h1 {
   margin-bottom: 2rem;
 }
 
-.paste-field {
-  width: 100%;
+.photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.no-items {
-  color: var(--bt-text-muted);
+.photo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
-.preview-table {
-  width: 100%;
-  border-collapse: collapse;
+.preview {
+  width: 160px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--bt-outline);
+}
+
+.photo-input {
+  display: none;
+}
+
+.import-error {
+  color: #ff8a80;
   margin-bottom: 1.5rem;
+}
 
-  th {
-    text-align: left;
-    color: var(--bt-text-muted);
-    font-weight: 500;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--bt-outline);
-  }
-
-  td {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--bt-outline);
-    color: var(--bt-text-default);
-    vertical-align: top;
-  }
+.importing {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--bt-text-muted);
 }
 
 .import-button {

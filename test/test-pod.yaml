@@ -76,9 +76,34 @@ spec:
         periodSeconds: 2
         failureThreshold: 5
 
+    - name: mock-openai
+      image: localhost/library-app-mock-openai:test
+      ports:
+        - containerPort: 3070
+          hostPort: 3070
+      env:
+        - name: PORT
+          value: "3070"
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 3070
+        initialDelaySeconds: 2
+        periodSeconds: 2
+        failureThreshold: 5
+
     - name: server
       image: localhost/library-app-server:test
+      volumeMounts:
+        - name: storage
+          mountPath: /app/storage
       env:
+        - name: STORAGE_DIRECTORY
+          value: /app/storage
+        - name: OPENAI_API_KEY
+          value: mock-key
+        - name: OPENAI_BASE_URL
+          value: http://localhost:3070
         - name: SERVER_PORT
           value: "8054"
         - name: SPRING_ACTUATOR_PORT
@@ -120,3 +145,7 @@ spec:
       hostPath:
         path: test/traefik-routes.yaml
         type: File
+    - name: storage
+      hostPath:
+        path: test/storage
+        type: DirectoryOrCreate

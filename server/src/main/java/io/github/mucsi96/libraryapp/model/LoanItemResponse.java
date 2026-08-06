@@ -4,15 +4,11 @@ import java.time.LocalDate;
 
 public record LoanItemResponse(
     Long id,
-    String barcode,
+    String isbn,
     String mediaType,
     String title,
     String author,
-    String category,
     String library,
     LocalDate dueDate,
-    String note,
-    String isbn,
-    String thumbnailUrl,
     boolean completed) {
 }

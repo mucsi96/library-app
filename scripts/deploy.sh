@@ -44,6 +44,7 @@ helm upgrade $SERVER_RELEASE_NAME mucsi96/spring-app \
     --set serviceAccountName=library-api-workload-identity \
     --set env.AZURE_KEYVAULT_ENDPOINT=$AZURE_KEYVAULT_ENDPOINT \
     --set env.CLIENT_APP_NAME=$CLIENT_RELEASE_NAME \
+    --set env.STORAGE_DIRECTORY=/storage \
     --set resources.requests.memory=512Mi \
     --set resources.requests.cpu=100m \
     --set resources.limits.memory=1Gi \
