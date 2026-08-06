@@ -47,7 +47,7 @@ helm upgrade $SERVER_RELEASE_NAME mucsi96/spring-app \
     --set env.STORAGE_DIRECTORY=/app/storage \
     --set persistentVolumeClaims[0].name=library-app-pvc \
     --set persistentVolumeClaims[0].accessMode=ReadWriteOnce \
-    --set persistentVolumeClaims[0].volumeName=library-app \
+    --set persistentVolumeClaims[0].volumeName=library-backup \
     --set persistentVolumeClaims[0].mountPath=/app/storage \
     --set persistentVolumeClaims[0].storageClassName="" \
     --set persistentVolumeClaims[0].storage=5Gi \
