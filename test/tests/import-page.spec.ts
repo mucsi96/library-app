@@ -53,7 +53,7 @@ test('imports a book from front and back photos', async ({ page }) => {
     title: 'Die drei ??? Kids - Diebe im Tierpark',
     author: 'Anne Scheller',
     library: 'Sihlcity',
-    completed: false,
+    status: 'LOANED',
   });
   expect(items[0].due_date_iso).toBe(daysFromToday(LOAN_PERIOD_DAYS));
 
@@ -121,7 +121,7 @@ test('re-importing an item refreshes the loan without duplicating or losing the 
     title: 'Die drei ??? Kids - Diebe im Tierpark',
     library: 'Sihlcity',
     dueDate: daysFromToday(-2),
-    completed: true,
+    status: 'READ',
   });
   // The item already has a thumbnail from its first import.
   const existingThumbnail = Buffer.from(IMAGES.unreadableFront, 'base64');
@@ -140,8 +140,64 @@ test('re-importing an item refreshes the loan without duplicating or losing the 
   const items = await getLoanItems();
   expect(items).toHaveLength(1);
   // The book kept its read status but got a fresh due date.
-  expect(items[0].completed).toBe(true);
+  expect(items[0].status).toBe('READ');
   expect(items[0].due_date_iso).toBe(daysFromToday(LOAN_PERIOD_DAYS));
   // The existing thumbnail is reused instead of being regenerated.
   expect(readThumbnail('9783440153598')).toEqual(existingThumbnail);
+});
+
+test('re-importing an unread returned item makes it loaned again', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    isbn: '9783440153598',
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(-30),
+    status: 'UNREAD_RETURNED',
+  });
+  writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
+
+  await page.goto('/import');
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.bookFront));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+
+  const items = await getLoanItems();
+  expect(items).toHaveLength(1);
+  expect(items[0].status).toBe('LOANED');
+});
+
+test('re-importing a read returned item makes it read again', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    isbn: '9783440153598',
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(-30),
+    status: 'READ_RETURNED',
+  });
+  writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
+
+  await page.goto('/import');
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.bookFront));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+
+  const items = await getLoanItems();
+  expect(items).toHaveLength(1);
+  expect(items[0].status).toBe('READ');
 });

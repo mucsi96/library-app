@@ -37,12 +37,12 @@
       <th>Type</th>
       <th>Title</th>
       <th>Library</th>
-      <th class="done-column">Done</th>
+      <th>Status</th>
     </tr>
   </thead>
   <tbody>
     @for (item of filteredItems(); track item.id) {
-    <tr [class.completed]="item.completed">
+    <tr [class.done]="isDone(item)" [class.read]="isRead(item)">
       <td class="due-cell">
         <span
           [class.due-chip]="isDueSoon(item) || isOverdue(item)"
@@ -56,18 +56,27 @@
       </td>
       <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
       <td>
-        <span class="title">{{ item.title }}</span>
-        @if (item.author) {
-        <span class="author">{{ item.author }}</span>
-        }
+        <button
+          class="title-button"
+          [attr.aria-label]="detailsActionLabel(item)"
+          (click)="openDetails(item)"
+        >
+          <span class="title">{{ item.title }}</span>
+          @if (item.author) {
+          <span class="author">{{ item.author }}</span>
+          }
+        </button>
       </td>
       <td>{{ item.library }}</td>
-      <td class="done-column">
-        <mat-checkbox
-          [checked]="item.completed"
-          (change)="setCompleted(item, $event.checked)"
-          [aria-label]="completedLabel(item)"
-        />
+      <td class="status-cell">
+        <button
+          class="status-chip"
+          [attr.data-status]="item.status"
+          [attr.aria-label]="statusActionLabel(item)"
+          (click)="openDetails(item)"
+        >
+          {{ statusLabel(item) }}
+        </button>
       </td>
     </tr>
     }

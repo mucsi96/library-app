@@ -39,7 +39,7 @@ export interface TestLoanItem {
   author?: string;
   library?: string;
   dueDate: string;
-  completed?: boolean;
+  status?: 'LOANED' | 'READING' | 'READ' | 'READ_RETURNED' | 'UNREAD_RETURNED';
 }
 
 export async function query(text: string, params?: any[]) {
@@ -80,7 +80,7 @@ export function readThumbnail(isbn: string): Buffer | null {
 export async function insertLoanItem(item: TestLoanItem) {
   await query(
     `INSERT INTO library.loan_items
-       (isbn, media_type, title, author, library, due_date, completed)
+       (isbn, media_type, title, author, library, due_date, status)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       item.isbn ?? null,
@@ -89,7 +89,7 @@ export async function insertLoanItem(item: TestLoanItem) {
       item.author ?? null,
       item.library ?? null,
       item.dueDate,
-      item.completed ?? false,
+      item.status ?? 'LOANED',
     ]
   );
 }

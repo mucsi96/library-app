@@ -5,6 +5,18 @@
   object-fit: cover;
 }
 
+.cover-large {
+  width: 176px;
+  height: 256px;
+  border-radius: 8px;
+}
+
+.cover-large mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
 .cover-placeholder {
   display: flex;
   align-items: center;
