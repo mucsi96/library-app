@@ -10,5 +10,5 @@ public record LoanItemResponse(
     String author,
     String library,
     LocalDate dueDate,
-    boolean completed) {
+    LoanStatus status) {
 }

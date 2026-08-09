@@ -1,16 +1,19 @@
 # Library App
 
 Track the books and CDs you borrowed from different libraries: see when each
-item is due back, and mark items as read or listened so you don't take them
-out again. Based on the patterns from
+item is due back, and track each item's status (loaned, reading, read,
+returned) so you don't take finished items out again. Based on the patterns
+from
 [skeleton-app](https://github.com/mucsi96/skeleton-app).
 
 ## Features
 
 - **Loans list** - All borrowed items sorted by due date, with overdue and
   due-soon reminders
-- **Read / listened tracking** - Mark a book as read or a CD as listened;
-  the flag survives re-imports so you know what not to borrow again
+- **Status tracking** - Each item is loaned, reading, read or returned
+  (listening/listened for CDs); tap an item to open its detail modal with
+  the large cover, ISBN and status chips. Read progress survives
+  re-imports so you know what not to borrow again
 - **Photo import** - Photograph the front and back of a borrowed item
   (on iPhone the camera opens directly); GPT-5 reads the ISBN, title,
   author and library branch from the photos, and gpt-image-2 generates a

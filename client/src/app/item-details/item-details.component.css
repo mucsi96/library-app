@@ -1,0 +1,34 @@
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-right: 0.75rem;
+}
+
+.cover {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 0 0 1.25rem;
+}
+
+.details div {
+  display: contents;
+}
+
+.details dt {
+  color: var(--bt-text-muted);
+}
+
+.details dd {
+  margin: 0;
+  color: var(--bt-text-strong);
+  overflow-wrap: anywhere;
+}

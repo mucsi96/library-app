@@ -33,8 +33,50 @@ h1 {
   }
 }
 
-.done-column {
-  text-align: center;
+.status-cell {
+  white-space: nowrap;
+}
+
+/* Tapping the status opens the detail dialog where it can be changed;
+   min-height keeps it a comfortable touch target on phones. */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0.1rem 0.75rem;
+  border: none;
+  border-radius: 1rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--bt-text-default) 15%, transparent);
+  color: var(--bt-text-strong);
+}
+
+.status-chip[data-status='READING'] {
+  background: color-mix(in srgb, #42a5f5 25%, transparent);
+  color: #90caf9;
+}
+
+.status-chip[data-status='READ'] {
+  background: color-mix(in srgb, #66bb6a 25%, transparent);
+  color: #a5d6a7;
+}
+
+.status-chip[data-status='RETURNED'] {
+  background: color-mix(in srgb, var(--bt-text-default) 8%, transparent);
+  color: var(--bt-text-muted);
+}
+
+.title-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .due-cell {
@@ -73,11 +115,11 @@ h1 {
   font-size: 0.85rem;
 }
 
-tr.completed td {
+tr.done td {
   opacity: 0.5;
 }
 
-tr.completed .title {
+tr.read .title {
   text-decoration: line-through;
 }
 

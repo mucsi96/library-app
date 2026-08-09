@@ -89,3 +89,34 @@ databaseChangeLog:
             tableName: loan_items
             columnNames: isbn
             constraintName: uq_loan_items_isbn
+  - changeSet:
+      id: 4-replace-completed-with-status
+      author: mucsi96
+      changes:
+        - addColumn:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: status
+                  type: text
+        - update:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: status
+                  value: READ
+            where: completed = true
+        - update:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: status
+                  value: LOANED
+            where: completed = false
+        - addNotNullConstraint:
+            tableName: loan_items
+            columnName: status
+            columnDataType: text
+        - dropColumn:
+            tableName: loan_items
+            columnName: completed

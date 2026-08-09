@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import io.github.mucsi96.libraryapp.model.LoanItemResponse;
-import io.github.mucsi96.libraryapp.model.UpdateCompletedRequest;
+import io.github.mucsi96.libraryapp.model.UpdateStatusRequest;
 import io.github.mucsi96.libraryapp.service.LoanItemService;
 import io.github.mucsi96.libraryapp.service.ThumbnailService;
 import jakarta.validation.Valid;
@@ -45,10 +45,10 @@ public class LoanItemController {
     return loanItemService.importItem(front, back);
   }
 
-  @PutMapping("/items/{id}/completed")
+  @PutMapping("/items/{id}/status")
   @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
-  public LoanItemResponse setCompleted(@PathVariable Long id, @Valid @RequestBody UpdateCompletedRequest request) {
-    return loanItemService.setCompleted(id, request.completed());
+  public LoanItemResponse setStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
+    return loanItemService.setStatus(id, request.status());
   }
 
   @GetMapping(value = "/thumbnails/{isbn:\\d{13}}", produces = MediaType.IMAGE_JPEG_VALUE)

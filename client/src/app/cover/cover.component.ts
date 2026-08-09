@@ -16,6 +16,8 @@ export class CoverComponent {
 
   readonly item = input.required<LoanItem>();
 
+  readonly size = input<'small' | 'large'>('small');
+
   readonly thumbnail = resource({
     params: () => ({ isbn: this.item().isbn }),
     loader: async ({ params }) =>

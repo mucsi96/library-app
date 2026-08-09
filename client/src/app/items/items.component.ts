@@ -1,28 +1,25 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
 import { CoverComponent } from '../cover/cover.component';
+import { ItemDetailsComponent } from '../item-details/item-details.component';
 import { ItemsService } from '../items.service';
 import { LoanItem, MediaType } from '../loan-item';
 import { daysUntilDue, dueLabel } from '../utils/due-label';
+import { statusLabel } from '../utils/status-label';
 
 @Component({
   selector: 'app-items',
   standalone: true,
-  imports: [
-    MatCheckboxModule,
-    MatChipsModule,
-    RouterLink,
-    BarLoaderComponent,
-    CoverComponent,
-  ],
+  imports: [MatChipsModule, RouterLink, BarLoaderComponent, CoverComponent],
   templateUrl: './items.component.html',
   styleUrl: './items.component.css',
 })
 export class ItemsComponent {
   private readonly itemsService = inject(ItemsService);
+  private readonly dialog = inject(MatDialog);
   readonly items = this.itemsService.items;
 
   readonly typeFilter = signal<MediaType | null>(null);
@@ -46,12 +43,24 @@ export class ItemsComponent {
     )
   );
 
-  setCompleted(item: LoanItem, completed: boolean): void {
-    this.itemsService.setCompleted(item.id, completed);
+  openDetails(item: LoanItem): void {
+    this.dialog.open(ItemDetailsComponent, {
+      data: item,
+      width: '420px',
+      maxWidth: 'calc(100vw - 2rem)',
+    });
   }
 
-  completedLabel(item: LoanItem): string {
-    return `Mark "${item.title}" as ${item.mediaType === 'CD' ? 'listened' : 'read'}`;
+  statusLabel(item: LoanItem): string {
+    return statusLabel(item.status, item.mediaType);
+  }
+
+  statusActionLabel(item: LoanItem): string {
+    return `Change status of "${item.title}"`;
+  }
+
+  isDone(item: LoanItem): boolean {
+    return item.status === 'READ' || item.status === 'RETURNED';
   }
 
   isOverdue(item: LoanItem): boolean {

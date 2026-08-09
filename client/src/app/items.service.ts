@@ -1,7 +1,7 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject, resource } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { LoanItem } from './loan-item';
+import { LoanItem, LoanStatus } from './loan-item';
 import { SKIP_ERROR_NOTIFICATION } from './utils/error.interceptor';
 import { fetchJson } from './utils/fetchJson';
 
@@ -15,10 +15,10 @@ export class ItemsService {
     loader: () => fetchJson<LoanItem[]>(this.http, '/api/items'),
   });
 
-  async setCompleted(id: number, completed: boolean): Promise<void> {
-    await fetchJson<LoanItem>(this.http, `/api/items/${id}/completed`, {
+  async setStatus(id: number, status: LoanStatus): Promise<void> {
+    await fetchJson<LoanItem>(this.http, `/api/items/${id}/status`, {
       method: 'put',
-      body: { completed },
+      body: { status },
     });
     this.items.reload();
   }

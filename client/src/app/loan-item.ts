@@ -1,5 +1,7 @@
 export type MediaType = 'BOOK' | 'CD';
 
+export type LoanStatus = 'LOANED' | 'READING' | 'READ' | 'RETURNED';
+
 export interface LoanItem {
   id: number;
   isbn: string | null;
@@ -8,5 +10,5 @@ export interface LoanItem {
   author: string | null;
   library: string | null;
   dueDate: string;
-  completed: boolean;
+  status: LoanStatus;
 }

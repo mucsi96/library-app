@@ -141,7 +141,39 @@ test('shows a reminder for items due soon', async ({ page }) => {
   await expect(page.getByText('Due in 2 days')).toBeVisible();
 });
 
-test('marks a book as read', async ({ page }) => {
+test('shows item details in a modal', async ({ page }) => {
+  await insertLoanItem({
+    isbn: '9783440153598',
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    author: 'Anne Scheller',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+  });
+  writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
+
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'Die drei ??? Kids - Diebe im Tierpark' })
+    .click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(
+    dialog.getByRole('heading', { name: 'Die drei ??? Kids - Diebe im Tierpark' })
+  ).toBeVisible();
+  await expect(dialog.getByText('9783440153598')).toBeVisible();
+  await expect(dialog.getByText('Anne Scheller')).toBeVisible();
+  await expect(
+    dialog.getByRole('img', {
+      name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
+    })
+  ).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(dialog).not.toBeVisible();
+});
+
+test('changes a book status to read from the detail modal', async ({ page }) => {
   await insertLoanItem({
     mediaType: 'BOOK',
     title: 'Kommissar Pfote',
@@ -151,22 +183,27 @@ test('marks a book as read', async ({ page }) => {
 
   await page.goto('/');
 
-  const checkbox = page.getByRole('checkbox', {
-    name: 'Mark "Kommissar Pfote" as read',
+  const statusChip = page.getByRole('button', {
+    name: 'Change status of "Kommissar Pfote"',
   });
-  await checkbox.check();
-  await expect(checkbox).toBeChecked();
+  await expect(statusChip).toHaveText('Loaned');
+  await statusChip.click();
 
-  // Persisted: still checked after a reload and stored in the database.
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('option', { name: 'Read', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(statusChip).toHaveText('Read');
+
+  // Persisted: still read after a reload and stored in the database.
   await page.reload();
   await expect(
-    page.getByRole('checkbox', { name: 'Mark "Kommissar Pfote" as read' })
-  ).toBeChecked();
+    page.getByRole('button', { name: 'Change status of "Kommissar Pfote"' })
+  ).toHaveText('Read');
   const items = await getLoanItems();
-  expect(items[0].completed).toBe(true);
+  expect(items[0].status).toBe('READ');
 });
 
-test('marks a CD as listened and can undo it', async ({ page }) => {
+test('changes a CD status to listened and back to loaned', async ({ page }) => {
   await insertLoanItem({
     mediaType: 'CD',
     title: 'Kei Angscht vor em Hotzeplotz',
@@ -176,19 +213,28 @@ test('marks a CD as listened and can undo it', async ({ page }) => {
 
   await page.goto('/');
 
-  const checkbox = page.getByRole('checkbox', {
-    name: 'Mark "Kei Angscht vor em Hotzeplotz" as listened',
+  const statusChip = page.getByRole('button', {
+    name: 'Change status of "Kei Angscht vor em Hotzeplotz"',
   });
-  await checkbox.check();
-  await expect(checkbox).toBeChecked();
+  await statusChip.click();
 
-  await checkbox.uncheck();
-  await expect(checkbox).not.toBeChecked();
+  // CD statuses use listening wording.
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('option', { name: 'Listened', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(statusChip).toHaveText('Listened');
+
+  await statusChip.click();
+  await dialog.getByRole('option', { name: 'Loaned', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await expect(statusChip).toHaveText('Loaned');
 
   await page.reload();
   await expect(
-    page.getByRole('checkbox', {
-      name: 'Mark "Kei Angscht vor em Hotzeplotz" as listened',
+    page.getByRole('button', {
+      name: 'Change status of "Kei Angscht vor em Hotzeplotz"',
     })
-  ).not.toBeChecked();
+  ).toHaveText('Loaned');
+  const items = await getLoanItems();
+  expect(items[0].status).toBe('LOANED');
 });

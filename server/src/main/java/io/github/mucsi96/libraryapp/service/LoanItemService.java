@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import io.github.mucsi96.libraryapp.entity.LoanItem;
 import io.github.mucsi96.libraryapp.model.ExtractedItem;
 import io.github.mucsi96.libraryapp.model.LoanItemResponse;
+import io.github.mucsi96.libraryapp.model.LoanStatus;
 import io.github.mucsi96.libraryapp.repository.LoanItemRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -36,7 +37,7 @@ public class LoanItemService {
    * Imports one borrowed item from its front and back photos: GPT extracts
    * the bibliographic data, the ISBN is validated, a cleaned cover
    * thumbnail is generated, and the item is upserted by ISBN so a
-   * re-borrowed item refreshes its loan without losing the completed flag.
+   * re-borrowed item refreshes its loan without losing the read status.
    */
   public LoanItemResponse importItem(MultipartFile front, MultipartFile back) {
     ExtractedItem extracted = itemExtractionService.extract(front, back);
@@ -51,11 +52,11 @@ public class LoanItemService {
   }
 
   @Transactional
-  public LoanItemResponse setCompleted(Long id, boolean completed) {
+  public LoanItemResponse setStatus(Long id, LoanStatus status) {
     LoanItem item = loanItemRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found: " + id));
 
-    item.setCompleted(completed);
+    item.setStatus(status);
 
     return toResponse(loanItemRepository.save(item));
   }
@@ -70,6 +71,11 @@ public class LoanItemService {
           existing.setAuthor(extracted.author());
           existing.setLibrary(extracted.library());
           existing.setDueDate(dueDate);
+          // A re-import means the item is borrowed again, so a returned
+          // item becomes loaned; read progress is kept.
+          if (existing.getStatus() == LoanStatus.RETURNED) {
+            existing.setStatus(LoanStatus.LOANED);
+          }
           return existing;
         })
         .orElseGet(() -> LoanItem.builder()
@@ -79,7 +85,7 @@ public class LoanItemService {
             .author(extracted.author())
             .library(extracted.library())
             .dueDate(dueDate)
-            .completed(false)
+            .status(LoanStatus.LOANED)
             .build()));
   }
 
@@ -92,6 +98,6 @@ public class LoanItemService {
         item.getAuthor(),
         item.getLibrary(),
         item.getDueDate(),
-        item.isCompleted());
+        item.getStatus());
   }
 }
