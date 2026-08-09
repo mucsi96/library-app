@@ -59,6 +59,12 @@ export class ItemsComponent {
     return `Change status of "${item.title}"`;
   }
 
+  // Distinct accessible names keep the title and status buttons of the
+  // same item unambiguous for assistive tech and role-based selectors.
+  detailsActionLabel(item: LoanItem): string {
+    return `Show details of "${item.title}"`;
+  }
+
   isDone(item: LoanItem): boolean {
     return item.status === 'READ' || item.status === 'RETURNED';
   }

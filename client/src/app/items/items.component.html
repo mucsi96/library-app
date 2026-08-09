@@ -56,7 +56,11 @@
       </td>
       <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
       <td>
-        <button class="title-button" (click)="openDetails(item)">
+        <button
+          class="title-button"
+          [attr.aria-label]="detailsActionLabel(item)"
+          (click)="openDetails(item)"
+        >
           <span class="title">{{ item.title }}</span>
           @if (item.author) {
           <span class="author">{{ item.author }}</span>

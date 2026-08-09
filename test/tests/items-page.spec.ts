@@ -154,7 +154,9 @@ test('shows item details in a modal', async ({ page }) => {
 
   await page.goto('/');
   await page
-    .getByRole('button', { name: 'Die drei ??? Kids - Diebe im Tierpark' })
+    .getByRole('button', {
+      name: 'Show details of "Die drei ??? Kids - Diebe im Tierpark"',
+    })
     .click();
 
   const dialog = page.getByRole('dialog');
