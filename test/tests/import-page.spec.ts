@@ -32,11 +32,12 @@ test('imports a book from front and back photos', async ({ page }) => {
 
   // Lands on the loans list with the imported item and its generated cover.
   await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+  const loans = page.getByRole('table');
   await expect(
-    page.getByText('Die drei ??? Kids - Diebe im Tierpark')
+    loans.getByText('Die drei ??? Kids - Diebe im Tierpark')
   ).toBeVisible();
-  await expect(page.getByText('Anne Scheller')).toBeVisible();
-  await expect(page.getByText(`Due in ${LOAN_PERIOD_DAYS} days`)).toBeVisible();
+  await expect(loans.getByText('Anne Scheller')).toBeVisible();
+  await expect(loans.getByText(`Due in ${LOAN_PERIOD_DAYS} days`)).toBeVisible();
   await expect(
     page.getByRole('img', {
       name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
@@ -74,7 +75,9 @@ test('imports a CD labelled with an ISBN-10', async ({ page }) => {
   await page.getByRole('button', { name: 'Import item' }).click();
 
   await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
-  await expect(page.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
+  await expect(
+    page.getByRole('table').getByText('Kei Angscht vor em Hotzeplotz')
+  ).toBeVisible();
 
   const items = await getLoanItems();
   // The ISBN-10 on the CD is converted to ISBN-13.
