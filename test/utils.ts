@@ -39,7 +39,7 @@ export interface TestLoanItem {
   author?: string;
   library?: string;
   dueDate: string;
-  status?: 'LOANED' | 'READING' | 'READ' | 'RETURNED';
+  status?: 'LOANED' | 'READING' | 'READ' | 'READ_RETURNED' | 'UNREAD_RETURNED';
 }
 
 export async function query(text: string, params?: any[]) {

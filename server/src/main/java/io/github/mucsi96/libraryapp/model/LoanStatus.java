@@ -4,5 +4,6 @@ public enum LoanStatus {
   LOANED,
   READING,
   READ,
-  RETURNED
+  READ_RETURNED,
+  UNREAD_RETURNED
 }

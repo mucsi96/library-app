@@ -42,7 +42,7 @@
   </thead>
   <tbody>
     @for (item of filteredItems(); track item.id) {
-    <tr [class.done]="isDone(item)" [class.read]="item.status === 'READ'">
+    <tr [class.done]="isDone(item)" [class.read]="isRead(item)">
       <td class="due-cell">
         <span
           [class.due-chip]="isDueSoon(item) || isOverdue(item)"

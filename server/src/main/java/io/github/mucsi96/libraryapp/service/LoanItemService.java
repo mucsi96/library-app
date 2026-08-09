@@ -71,11 +71,14 @@ public class LoanItemService {
           existing.setAuthor(extracted.author());
           existing.setLibrary(extracted.library());
           existing.setDueDate(dueDate);
-          // A re-import means the item is borrowed again, so a returned
-          // item becomes loaned; read progress is kept.
-          if (existing.getStatus() == LoanStatus.RETURNED) {
-            existing.setStatus(LoanStatus.LOANED);
-          }
+          // A re-import means the item is borrowed again: returned
+          // statuses map back to their on-loan equivalents so read
+          // progress is kept.
+          existing.setStatus(switch (existing.getStatus()) {
+            case READ_RETURNED -> LoanStatus.READ;
+            case UNREAD_RETURNED -> LoanStatus.LOANED;
+            default -> existing.getStatus();
+          });
           return existing;
         })
         .orElseGet(() -> LoanItem.builder()

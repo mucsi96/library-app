@@ -170,6 +170,17 @@ test('shows item details in a modal', async ({ page }) => {
       name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
     })
   ).toBeVisible();
+  for (const status of [
+    'Loaned',
+    'Reading',
+    'Read',
+    'Read & returned',
+    'Returned unread',
+  ]) {
+    await expect(
+      dialog.getByRole('option', { name: status, exact: true })
+    ).toBeVisible();
+  }
 
   await dialog.getByRole('button', { name: 'Close' }).click();
   await expect(dialog).not.toBeVisible();

@@ -120,3 +120,14 @@ databaseChangeLog:
         - dropColumn:
             tableName: loan_items
             columnName: completed
+  - changeSet:
+      id: 5-split-returned-status
+      author: mucsi96
+      changes:
+        - update:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: status
+                  value: UNREAD_RETURNED
+            where: status = 'RETURNED'

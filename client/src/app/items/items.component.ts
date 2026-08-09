@@ -66,7 +66,11 @@ export class ItemsComponent {
   }
 
   isDone(item: LoanItem): boolean {
-    return item.status === 'READ' || item.status === 'RETURNED';
+    return item.status !== 'LOANED' && item.status !== 'READING';
+  }
+
+  isRead(item: LoanItem): boolean {
+    return item.status === 'READ' || item.status === 'READ_RETURNED';
   }
 
   isOverdue(item: LoanItem): boolean {

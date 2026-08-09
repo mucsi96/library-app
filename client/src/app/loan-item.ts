@@ -1,6 +1,11 @@
 export type MediaType = 'BOOK' | 'CD';
 
-export type LoanStatus = 'LOANED' | 'READING' | 'READ' | 'RETURNED';
+export type LoanStatus =
+  | 'LOANED'
+  | 'READING'
+  | 'READ'
+  | 'READ_RETURNED'
+  | 'UNREAD_RETURNED';
 
 export interface LoanItem {
   id: number;

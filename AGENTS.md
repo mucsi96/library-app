@@ -43,10 +43,11 @@
 
 Application for tracking books and CDs borrowed from libraries:
 - Loans list with due dates, overdue and due-soon reminders
-- Track each item's status (loaned, reading, read, returned - with
-  listening/listened wording for CDs) so finished items aren't borrowed
-  again; the status is changed from a detail modal (large cover, ISBN,
-  status chips) opened by tapping an item
+- Track each item's status (loaned, reading, read, read & returned,
+  returned unread - with listening/listened wording for CDs), each shown
+  as a colored tag, so finished items aren't borrowed again; the status
+  is changed from a detail modal (large cover, ISBN, status chips)
+  opened by tapping an item
 - Import a borrowed item by photographing its front and back (camera
   capture input, so iPhone opens the photo app); GPT-5 extracts ISBN,
   title, author, media type and library branch from the photos, and the
@@ -58,7 +59,8 @@ Application for tracking books and CDs borrowed from libraries:
   in the loans list
 - Items are matched by ISBN, so re-imports refresh the due date without
   duplicating items, losing the read status, or regenerating the existing
-  thumbnail; a returned item becomes loaned again on re-import
+  thumbnail; on re-import a returned item goes back on loan (read &
+  returned becomes read, returned unread becomes loaned)
 - The due date is computed as import date + `loan-period-days` (28)
 
 ## Architecture
@@ -119,14 +121,14 @@ cd test && npx playwright test --ui  # Interactive test runner
 - `GET /api/thumbnails/{isbn13}` - Cover thumbnail (JPEG, immutable cache,
   authenticated)
 - `PUT /api/items/{id}/status` - Set an item's status (LOANED, READING,
-  READ or RETURNED) (authenticated)
+  READ, READ_RETURNED or UNREAD_RETURNED) (authenticated)
 
 ## Data Model
 
 - **loan_items** (schema `library`) - One row per borrowed item: ISBN-13
   (unique, import upsert key), media type (BOOK or CD), title, author,
-  library branch, due date, and the status (LOANED, READING, READ or
-  RETURNED)
+  library branch, due date, and the status (LOANED, READING, READ,
+  READ_RETURNED or UNREAD_RETURNED)
 - Cover thumbnails live on disk (`storage.directory`, env
   `STORAGE_DIRECTORY`) as `thumbnails/{isbn13}.jpg`, not in the database
 

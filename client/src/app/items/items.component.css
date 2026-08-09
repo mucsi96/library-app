@@ -53,6 +53,11 @@ h1 {
   color: var(--bt-text-strong);
 }
 
+.status-chip[data-status='LOANED'] {
+  background: color-mix(in srgb, #ffa726 22%, transparent);
+  color: #ffcc80;
+}
+
 .status-chip[data-status='READING'] {
   background: color-mix(in srgb, #42a5f5 25%, transparent);
   color: #90caf9;
@@ -63,9 +68,14 @@ h1 {
   color: #a5d6a7;
 }
 
-.status-chip[data-status='RETURNED'] {
-  background: color-mix(in srgb, var(--bt-text-default) 8%, transparent);
-  color: var(--bt-text-muted);
+.status-chip[data-status='READ_RETURNED'] {
+  background: color-mix(in srgb, #26a69a 25%, transparent);
+  color: #80cbc4;
+}
+
+.status-chip[data-status='UNREAD_RETURNED'] {
+  background: color-mix(in srgb, #ab47bc 25%, transparent);
+  color: #ce93d8;
 }
 
 .title-button {

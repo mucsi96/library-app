@@ -146,14 +146,16 @@ test('re-importing an item refreshes the loan without duplicating or losing the 
   expect(readThumbnail('9783440153598')).toEqual(existingThumbnail);
 });
 
-test('re-importing a returned item makes it loaned again', async ({ page }) => {
+test('re-importing an unread returned item makes it loaned again', async ({
+  page,
+}) => {
   await insertLoanItem({
     isbn: '9783440153598',
     mediaType: 'BOOK',
     title: 'Die drei ??? Kids - Diebe im Tierpark',
     library: 'Sihlcity',
     dueDate: daysFromToday(-30),
-    status: 'RETURNED',
+    status: 'UNREAD_RETURNED',
   });
   writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
 
@@ -170,4 +172,32 @@ test('re-importing a returned item makes it loaned again', async ({ page }) => {
   const items = await getLoanItems();
   expect(items).toHaveLength(1);
   expect(items[0].status).toBe('LOANED');
+});
+
+test('re-importing a read returned item makes it read again', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    isbn: '9783440153598',
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(-30),
+    status: 'READ_RETURNED',
+  });
+  writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
+
+  await page.goto('/import');
+  await page
+    .getByLabel('Front photo')
+    .setInputFiles(photo('front.png', IMAGES.bookFront));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
+  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+
+  const items = await getLoanItems();
+  expect(items).toHaveLength(1);
+  expect(items[0].status).toBe('READ');
 });
