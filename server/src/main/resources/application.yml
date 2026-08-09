@@ -2,6 +2,9 @@ storage:
   directory: ${STORAGE_DIRECTORY}
 loan-period-days: 28
 spring:
+  mvc:
+    problemdetails:
+      enabled: true
   servlet:
     multipart:
       max-file-size: 15MB
