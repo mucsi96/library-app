@@ -4,7 +4,12 @@
     @if(isAuthenticated()) {
     <div class="header-links">
       <a mat-button routerLink="/">My loans</a>
-      <a mat-button routerLink="/import">Import</a>
+      <a mat-button routerLink="/import">
+        Import
+        @if (importsInFlight(); as count) {
+        <span class="import-badge" [attr.aria-label]="count + ' imports in progress'">{{ count }}</span>
+        }
+      </a>
     </div>
     <div class="header-right">
       <app-header></app-header>

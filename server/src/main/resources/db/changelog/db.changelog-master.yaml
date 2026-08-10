@@ -131,3 +131,128 @@ databaseChangeLog:
                   name: status
                   value: UNREAD_RETURNED
             where: status = 'RETURNED'
+  - changeSet:
+      id: 6-import-jobs
+      author: mucsi96
+      changes:
+        - createTable:
+            tableName: import_jobs
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: reference
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_import_jobs_reference
+              - column:
+                  name: status
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: front_photo
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: back_photo
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: isbn
+                  type: text
+              - column:
+                  name: title
+                  type: text
+              - column:
+                  name: author
+                  type: text
+              - column:
+                  name: media_type
+                  type: text
+              - column:
+                  name: library
+                  type: text
+              - column:
+                  name: loan_item_id
+                  type: bigint
+              - column:
+                  name: error_detail
+                  type: text
+              - column:
+                  name: attempts
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next_attempt_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: import_jobs
+            baseColumnNames: loan_item_id
+            referencedTableName: loan_items
+            referencedColumnNames: id
+            constraintName: fk_import_jobs_loan_item
+            onDelete: SET NULL
+        - createIndex:
+            tableName: import_jobs
+            indexName: idx_import_jobs_claim
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: next_attempt_at
+        - createIndex:
+            tableName: import_jobs
+            indexName: idx_import_jobs_created_at
+            columns:
+              - column:
+                  name: created_at
+  - changeSet:
+      id: 7-ai-pacer
+      author: mucsi96
+      changes:
+        - createTable:
+            tableName: ai_pacer
+            columns:
+              - column:
+                  name: id
+                  type: smallint
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: next_call_allowed_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: ai_pacer
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1

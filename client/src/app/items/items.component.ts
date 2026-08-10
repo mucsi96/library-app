@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
 import { CoverComponent } from '../cover/cover.component';
+import { ImportQueueComponent } from '../import-queue/import-queue.component';
 import { ItemDetailsComponent } from '../item-details/item-details.component';
 import { ItemsService } from '../items.service';
 import { LoanItem, MediaType } from '../loan-item';
@@ -13,7 +14,13 @@ import { statusLabel } from '../utils/status-label';
 @Component({
   selector: 'app-items',
   standalone: true,
-  imports: [MatChipsModule, RouterLink, BarLoaderComponent, CoverComponent],
+  imports: [
+    MatChipsModule,
+    RouterLink,
+    BarLoaderComponent,
+    CoverComponent,
+    ImportQueueComponent,
+  ],
   templateUrl: './items.component.html',
   styleUrl: './items.component.css',
 })

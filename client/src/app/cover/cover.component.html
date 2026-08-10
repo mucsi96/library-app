@@ -1,6 +1,6 @@
-@if (thumbnail.isLoading()) {
+@if (image.isLoading()) {
 <div class="cover cover-skeleton" [class.cover-large]="size() === 'large'"></div>
-} @else if (thumbnail.value(); as url) {
+} @else if (image.value(); as url) {
 <img
   class="cover"
   [class.cover-large]="size() === 'large'"

@@ -48,6 +48,14 @@ public class FileStorageService {
     }
   }
 
+  public void deleteFile(String fileName) {
+    try {
+      Files.deleteIfExists(resolveFilePath(fileName));
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to delete file: " + fileName, e);
+    }
+  }
+
   private Path resolveFilePath(String fileName) {
     Path filePath = storagePath.resolve(fileName).normalize();
 

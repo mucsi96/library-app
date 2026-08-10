@@ -14,12 +14,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.github.mucsi96.libraryapp.model.ImportJobResponse;
 import io.github.mucsi96.libraryapp.model.LoanItemResponse;
 import io.github.mucsi96.libraryapp.model.UpdateStatusRequest;
+import io.github.mucsi96.libraryapp.service.ImportJobService;
 import io.github.mucsi96.libraryapp.service.LoanItemService;
 import io.github.mucsi96.libraryapp.service.ThumbnailService;
 import jakarta.validation.Valid;
@@ -30,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class LoanItemController {
   private final LoanItemService loanItemService;
   private final ThumbnailService thumbnailService;
+  private final ImportJobService importJobService;
 
   @GetMapping("/items")
   @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_readItems')")
@@ -37,12 +41,18 @@ public class LoanItemController {
     return loanItemService.getItems();
   }
 
+  /**
+   * Queues an import. The photos are staged and the response returns
+   * immediately, so the phone is free while the AI work happens in the
+   * background — poll {@code /import-jobs} for progress.
+   */
   @PostMapping("/items/import")
+  @ResponseStatus(HttpStatus.ACCEPTED)
   @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
-  public LoanItemResponse importItem(
+  public ImportJobResponse importItem(
       @RequestParam("front") MultipartFile front,
       @RequestParam("back") MultipartFile back) {
-    return loanItemService.importItem(front, back);
+    return importJobService.enqueue(front, back);
   }
 
   @PutMapping("/items/{id}/status")

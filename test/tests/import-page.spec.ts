@@ -1,7 +1,10 @@
+import { Page } from '@playwright/test';
 import { test, expect } from '../fixtures';
 import {
   IMAGES,
+  configureMockOpenAI,
   daysFromToday,
+  getImportJobs,
   getLoanItems,
   insertLoanItem,
   photo,
@@ -10,6 +13,26 @@ import {
 } from '../utils';
 
 const LOAN_PERIOD_DAYS = 28;
+const BOOK_TITLE = 'Die drei ??? Kids - Diebe im Tierpark';
+
+/** Takes both photos and hands the item to the background worker. */
+async function queueImport(page: Page, front: string) {
+  await page.getByLabel('Front photo').setInputFiles(photo('front.png', front));
+  await page
+    .getByLabel('Back photo')
+    .setInputFiles(photo('back.png', IMAGES.generatedCover));
+  await page.getByRole('button', { name: 'Import item' }).click();
+  // The page clearing itself is the signal that the upload was accepted
+  // and the next item can be captured.
+  await expect(page.getByAltText('Front photo preview')).not.toBeVisible();
+}
+
+/** The loans table, so assertions never match the processing cards. */
+const loansTable = (page: Page) => page.getByRole('table');
+
+/** The processing section, so assertions never match the loans table. */
+const processing = (page: Page) =>
+  page.getByRole('region', { name: 'Processing' });
 
 test('imports a book from front and back photos', async ({ page }) => {
   await page.goto('/');
@@ -30,18 +53,20 @@ test('imports a book from front and back photos', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Import item' }).click();
 
-  // Lands on the loans list with the imported item and its generated cover.
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
-  const loans = page.getByRole('table');
-  await expect(
-    loans.getByText('Die drei ??? Kids - Diebe im Tierpark')
-  ).toBeVisible();
+  // The camera is free again immediately: the page stays put and the
+  // photos are cleared for the next item.
+  await expect(page.getByRole('heading', { name: 'Import item' })).toBeVisible();
+  await expect(page.getByAltText('Front photo preview')).not.toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Processing' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'My loans' }).click();
+
+  const loans = loansTable(page);
+  await expect(loans.getByText(BOOK_TITLE)).toBeVisible();
   await expect(loans.getByText('Anne Scheller')).toBeVisible();
   await expect(loans.getByText(`Due in ${LOAN_PERIOD_DAYS} days`)).toBeVisible();
   await expect(
-    page.getByRole('img', {
-      name: 'Cover of "Die drei ??? Kids - Diebe im Tierpark"',
-    })
+    loans.getByRole('img', { name: `Cover of "${BOOK_TITLE}"` })
   ).toBeVisible();
 
   const items = await getLoanItems();
@@ -50,7 +75,7 @@ test('imports a book from front and back photos', async ({ page }) => {
   expect(items[0]).toMatchObject({
     isbn: '9783440153598',
     media_type: 'BOOK',
-    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    title: BOOK_TITLE,
     author: 'Anne Scheller',
     library: 'Sihlcity',
     status: 'LOANED',
@@ -63,20 +88,33 @@ test('imports a book from front and back photos', async ({ page }) => {
   );
 });
 
+test('shows what the AI is doing while an import is processed', async ({
+  page,
+}) => {
+  // Slow enough that each stage survives a client poll.
+  await configureMockOpenAI({ delayMs: 3000 });
+
+  await page.goto('/import');
+  await queueImport(page, IMAGES.bookFront);
+
+  const card = processing(page);
+  await expect(card.getByText('Reading the ISBN…')).toBeVisible();
+
+  // Once the ISBN is read the item can be named, even though the cover is
+  // still being drawn.
+  await expect(card.getByText('Drawing the cover…')).toBeVisible();
+  await expect(card.getByText(BOOK_TITLE)).toBeVisible();
+
+  await expect(card.getByText('Added to your loans')).toBeVisible();
+});
+
 test('imports a CD labelled with an ISBN-10', async ({ page }) => {
   await page.goto('/import');
+  await queueImport(page, IMAGES.cdFront);
 
-  await page
-    .getByLabel('Front photo')
-    .setInputFiles(photo('front.png', IMAGES.cdFront));
-  await page
-    .getByLabel('Back photo')
-    .setInputFiles(photo('back.png', IMAGES.generatedCover));
-  await page.getByRole('button', { name: 'Import item' }).click();
-
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+  await page.getByRole('link', { name: 'My loans' }).click();
   await expect(
-    page.getByRole('table').getByText('Kei Angscht vor em Hotzeplotz')
+    loansTable(page).getByText('Kei Angscht vor em Hotzeplotz')
   ).toBeVisible();
 
   const items = await getLoanItems();
@@ -93,23 +131,64 @@ test('imports a CD labelled with an ISBN-10', async ({ page }) => {
   );
 });
 
-test('rejects photos when no valid ISBN is readable', async ({ page }) => {
-  await page.goto('/import');
+test('queues several items back to back without waiting for the AI', async ({
+  page,
+}) => {
+  await configureMockOpenAI({ delayMs: 1000 });
 
-  await page
-    .getByLabel('Front photo')
-    .setInputFiles(photo('front.png', IMAGES.unreadableFront));
-  await page
-    .getByLabel('Back photo')
-    .setInputFiles(photo('back.png', IMAGES.generatedCover));
-  await page.getByRole('button', { name: 'Import item' }).click();
+  await page.goto('/import');
+  await queueImport(page, IMAGES.bookFront);
+  // The second item is captured while the first is still being processed.
+  await queueImport(page, IMAGES.cdFront);
+
+  expect(await getImportJobs()).toHaveLength(2);
+
+  await page.getByRole('link', { name: 'My loans' }).click();
+
+  const loans = loansTable(page);
+  await expect(loans.getByText(BOOK_TITLE)).toBeVisible();
+  await expect(loans.getByText('Kei Angscht vor em Hotzeplotz')).toBeVisible();
+  expect(await getLoanItems()).toHaveLength(2);
+});
+
+test('reports an import whose ISBN could not be read and lets it be dismissed', async ({
+  page,
+}) => {
+  await page.goto('/import');
+  await queueImport(page, IMAGES.unreadableFront);
 
   await expect(page.getByRole('alert')).toContainText(
     'No valid ISBN found on the photos.'
   );
-  // Stays on the import page and nothing is stored.
-  await expect(page.getByRole('heading', { name: 'Import item' })).toBeVisible();
+  // Nothing is stored for a failed import.
   expect(await getLoanItems()).toHaveLength(0);
+
+  await page.getByRole('button', { name: /^Dismiss failed import/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'Processing' })).not.toBeVisible();
+  expect(await getImportJobs()).toHaveLength(0);
+});
+
+test('retries a rate limited import without retaking the photos', async ({
+  page,
+}) => {
+  // Exhausts max-attempts (3 in the test profile), then recovers.
+  await configureMockOpenAI({
+    failWith: { status: 429, count: 3, retryAfter: 1 },
+  });
+
+  await page.goto('/import');
+  await queueImport(page, IMAGES.bookFront);
+
+  await expect(page.getByRole('alert')).toContainText('was busy');
+
+  await page.getByRole('button', { name: /^Retry importing/ }).click();
+
+  // The staged photos are reused, so the item lands without the user
+  // touching the camera again.
+  await page.getByRole('link', { name: 'My loans' }).click();
+  await expect(loansTable(page).getByText(BOOK_TITLE)).toBeVisible();
+  expect(await getLoanItems()).toHaveLength(1);
 });
 
 test('re-importing an item refreshes the loan without duplicating or losing the read status', async ({
@@ -118,7 +197,7 @@ test('re-importing an item refreshes the loan without duplicating or losing the 
   await insertLoanItem({
     isbn: '9783440153598',
     mediaType: 'BOOK',
-    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    title: BOOK_TITLE,
     library: 'Sihlcity',
     dueDate: daysFromToday(-2),
     status: 'READ',
@@ -128,14 +207,9 @@ test('re-importing an item refreshes the loan without duplicating or losing the 
   writeThumbnail('9783440153598', existingThumbnail);
 
   await page.goto('/import');
-  await page
-    .getByLabel('Front photo')
-    .setInputFiles(photo('front.png', IMAGES.bookFront));
-  await page
-    .getByLabel('Back photo')
-    .setInputFiles(photo('back.png', IMAGES.generatedCover));
-  await page.getByRole('button', { name: 'Import item' }).click();
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+  await queueImport(page, IMAGES.bookFront);
+
+  await expect(processing(page).getByText('Added to your loans')).toBeVisible();
 
   const items = await getLoanItems();
   expect(items).toHaveLength(1);
@@ -152,7 +226,7 @@ test('re-importing an unread returned item makes it loaned again', async ({
   await insertLoanItem({
     isbn: '9783440153598',
     mediaType: 'BOOK',
-    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    title: BOOK_TITLE,
     library: 'Sihlcity',
     dueDate: daysFromToday(-30),
     status: 'UNREAD_RETURNED',
@@ -160,14 +234,9 @@ test('re-importing an unread returned item makes it loaned again', async ({
   writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
 
   await page.goto('/import');
-  await page
-    .getByLabel('Front photo')
-    .setInputFiles(photo('front.png', IMAGES.bookFront));
-  await page
-    .getByLabel('Back photo')
-    .setInputFiles(photo('back.png', IMAGES.generatedCover));
-  await page.getByRole('button', { name: 'Import item' }).click();
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+  await queueImport(page, IMAGES.bookFront);
+
+  await expect(processing(page).getByText('Added to your loans')).toBeVisible();
 
   const items = await getLoanItems();
   expect(items).toHaveLength(1);
@@ -180,7 +249,7 @@ test('re-importing a read returned item makes it read again', async ({
   await insertLoanItem({
     isbn: '9783440153598',
     mediaType: 'BOOK',
-    title: 'Die drei ??? Kids - Diebe im Tierpark',
+    title: BOOK_TITLE,
     library: 'Sihlcity',
     dueDate: daysFromToday(-30),
     status: 'READ_RETURNED',
@@ -188,14 +257,9 @@ test('re-importing a read returned item makes it read again', async ({
   writeThumbnail('9783440153598', Buffer.from(IMAGES.generatedCover, 'base64'));
 
   await page.goto('/import');
-  await page
-    .getByLabel('Front photo')
-    .setInputFiles(photo('front.png', IMAGES.bookFront));
-  await page
-    .getByLabel('Back photo')
-    .setInputFiles(photo('back.png', IMAGES.generatedCover));
-  await page.getByRole('button', { name: 'Import item' }).click();
-  await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+  await queueImport(page, IMAGES.bookFront);
+
+  await expect(processing(page).getByText('Added to your loans')).toBeVisible();
 
   const items = await getLoanItems();
   expect(items).toHaveLength(1);

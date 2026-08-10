@@ -4,6 +4,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { LoanItem } from '../loan-item';
 import { fetchAsset } from '../utils/fetchAsset';
 
+/** The little a cover needs to know about what it is showing. */
+export type CoverSubject = Pick<LoanItem, 'isbn' | 'title' | 'mediaType'>;
+
 @Component({
   selector: 'app-cover',
   standalone: true,
@@ -14,17 +17,35 @@ import { fetchAsset } from '../utils/fetchAsset';
 export class CoverComponent {
   private readonly http = inject(HttpClient);
 
-  readonly item = input.required<LoanItem>();
+  readonly item = input.required<CoverSubject>();
 
   readonly size = input<'small' | 'large'>('small');
 
-  readonly thumbnail = resource({
-    params: () => ({ isbn: this.item().isbn }),
+  /**
+   * Overrides the generated thumbnail, so an import still being processed
+   * can stand in with the photo the user just took.
+   */
+  readonly assetUrl = input<string | null>(null);
+
+  readonly image = resource({
+    params: () => ({ url: this.imageUrl() }),
     loader: async ({ params }) =>
-      params.isbn ? fetchAsset(this.http, `/api/thumbnails/${params.isbn}`) : null,
+      params.url ? fetchAsset(this.http, params.url) : null,
   });
 
   coverLabel(): string {
     return `Cover of "${this.item().title}"`;
+  }
+
+  private imageUrl(): string | null {
+    const override = this.assetUrl();
+
+    if (override) {
+      return override;
+    }
+
+    const isbn = this.item().isbn;
+
+    return isbn ? `/api/thumbnails/${isbn}` : null;
   }
 }

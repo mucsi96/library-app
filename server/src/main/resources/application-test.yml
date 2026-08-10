@@ -1,3 +1,13 @@
+# Tight timings so the E2E suite exercises the queue without waiting on
+# production-scale pacing.
+import:
+  poll-interval: PT0.2S
+  min-job-interval: PT0.2S
+  max-attempts: 3
+  retry-base-delay: PT0.5S
+  retry-max-delay: PT2S
+  stale-after: PT30S
+  sweep-interval: PT5S
 spring:
   cloud:
     azure:

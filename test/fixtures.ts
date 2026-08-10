@@ -1,7 +1,7 @@
 import { test as base, TestInfo } from '@playwright/test';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { cleanupDb, cleanupStorage } from './utils';
+import { cleanupDb, cleanupStorage, configureMockOpenAI } from './utils';
 
 export const test = base.extend({
   page: async ({ page }, use, testInfo: TestInfo) => {
@@ -9,7 +9,7 @@ export const test = base.extend({
     cleanupStorage();
 
     try {
-      await fetch('http://localhost:3070/reset', { method: 'POST' });
+      await configureMockOpenAI();
     } catch (error) {
       console.warn('Warning: Could not reset mock OpenAI server:', error);
     }

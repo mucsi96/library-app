@@ -1,0 +1,80 @@
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.queue h2 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bt-text-muted);
+}
+
+.queue-card {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border: 1px solid var(--bt-outline);
+  border-radius: 12px;
+}
+
+/* A finished import glows briefly, then the server stops listing it and
+   the row it created takes over below. */
+.queue-card[data-status='COMPLETED'] {
+  border-color: color-mix(in srgb, var(--bt-text-strong) 35%, transparent);
+  animation: queue-settle 0.6s ease-out;
+}
+
+.queue-card[data-status='FAILED'] {
+  border-color: color-mix(in srgb, #ff6b6b 55%, transparent);
+}
+
+.queue-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.queue-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--bt-text-strong);
+}
+
+.queue-author,
+.queue-status {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--bt-text-muted);
+}
+
+.queue-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #ff6b6b;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.queue-actions button {
+  flex: 1 1 8rem;
+  min-height: 44px;
+}
+
+@keyframes queue-settle {
+  from {
+    opacity: 0.5;
+  }
+}

@@ -138,3 +138,70 @@ tr.read .title {
   justify-content: center;
   margin: 150px auto;
 }
+
+/* On a phone the six columns are unreadable, so each row becomes a card.
+   Overriding display drops the implicit table semantics, which is why the
+   template sets role="table"/"row"/"cell" explicitly. */
+@media (max-width: 700px) {
+  .items-table,
+  .items-table tbody,
+  .items-table tr,
+  .items-table td {
+    display: block;
+  }
+
+  .items-table thead {
+    display: none;
+  }
+
+  .items-table tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      'cover title   title'
+      'cover type    library'
+      'cover due     status';
+    gap: 0.35rem 0.875rem;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--bt-outline);
+    border-radius: 12px;
+  }
+
+  .items-table td {
+    padding: 0;
+    border-bottom: none;
+  }
+
+  .cover-cell {
+    grid-area: cover;
+    align-self: start;
+  }
+
+  .title-cell {
+    grid-area: title;
+  }
+
+  .type-cell {
+    grid-area: type;
+    font-size: 0.8rem;
+    color: var(--bt-text-muted);
+  }
+
+  .library-cell {
+    grid-area: library;
+    justify-self: end;
+    font-size: 0.8rem;
+    color: var(--bt-text-muted);
+  }
+
+  .due-cell {
+    grid-area: due;
+  }
+
+  .status-cell {
+    grid-area: status;
+    justify-self: end;
+  }
+}

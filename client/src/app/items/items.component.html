@@ -1,7 +1,10 @@
-@if (items.isLoading()) {
+@if (items.isLoading() && !items.hasValue()) {
 <bt-bar-loader class="page-loading" label="Loading loans" />
 } @else {
 <h1>My loans</h1>
+
+<app-import-queue />
+
 @if (items.value()?.length === 0) {
 <p class="empty">
   No items yet. <a routerLink="/import">Import an item</a> to get started.
@@ -29,21 +32,23 @@
 @if (filteredItems().length === 0) {
 <p class="empty">No items match the selected filters.</p>
 } @else {
-<table class="items-table">
-  <thead>
-    <tr>
-      <th>Due</th>
-      <th>Cover</th>
-      <th>Type</th>
-      <th>Title</th>
-      <th>Library</th>
-      <th>Status</th>
+<!-- Roles are explicit because the mobile card layout overrides the
+     table display, which otherwise strips them. -->
+<table class="items-table" role="table">
+  <thead role="rowgroup">
+    <tr role="row">
+      <th role="columnheader">Due</th>
+      <th role="columnheader">Cover</th>
+      <th role="columnheader">Type</th>
+      <th role="columnheader">Title</th>
+      <th role="columnheader">Library</th>
+      <th role="columnheader">Status</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody role="rowgroup">
     @for (item of filteredItems(); track item.id) {
-    <tr [class.done]="isDone(item)" [class.read]="isRead(item)">
-      <td class="due-cell">
+    <tr role="row" [class.done]="isDone(item)" [class.read]="isRead(item)">
+      <td role="cell" class="due-cell">
         <span
           [class.due-chip]="isDueSoon(item) || isOverdue(item)"
           [class.due-chip-overdue]="isOverdue(item)"
@@ -51,11 +56,13 @@
           {{ dueLabel(item) }}
         </span>
       </td>
-      <td class="cover-cell">
+      <td role="cell" class="cover-cell">
         <app-cover [item]="item" />
       </td>
-      <td>{{ item.mediaType === 'CD' ? 'CD' : 'Book' }}</td>
-      <td>
+      <td role="cell" class="type-cell">
+        {{ item.mediaType === 'CD' ? 'CD' : 'Book' }}
+      </td>
+      <td role="cell" class="title-cell">
         <button
           class="title-button"
           [attr.aria-label]="detailsActionLabel(item)"
@@ -67,8 +74,8 @@
           }
         </button>
       </td>
-      <td>{{ item.library }}</td>
-      <td class="status-cell">
+      <td role="cell" class="library-cell">{{ item.library }}</td>
+      <td role="cell" class="status-cell">
         <button
           class="status-chip"
           [attr.data-status]="item.status"

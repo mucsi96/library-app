@@ -1,6 +1,18 @@
 storage:
   directory: ${STORAGE_DIRECTORY}
 loan-period-days: 28
+import:
+  poll-interval: PT1S
+  # A job costs at most two provider calls, so this is what bounds our
+  # outbound request rate - across every replica, via the ai_pacer row.
+  min-job-interval: PT2S
+  max-attempts: 5
+  retry-base-delay: PT5S
+  retry-max-delay: PT5M
+  stale-after: PT5M
+  completed-visibility: PT60S
+  retention: P7D
+  sweep-interval: PT1M
 spring:
   mvc:
     problemdetails:
@@ -42,6 +54,11 @@ spring:
   ai:
     openai:
       api-key: ${openai-api-key}
+      # Import jobs own retrying - they can back off across minutes and
+      # survive a restart - so the SDK must not retry underneath them and
+      # multiply the calls we make against a rate limit.
+      max-retries: 0
+      timeout: PT2M
       chat:
         options:
           model: gpt-5
