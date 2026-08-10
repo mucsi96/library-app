@@ -3,6 +3,7 @@ import {
   IMAGES,
   daysFromToday,
   getLoanItems,
+  insertLibrary,
   insertLoanItem,
   writeThumbnail,
 } from '../utils';
@@ -113,6 +114,50 @@ test('filters items by type and library', async ({ page }) => {
   // Combining both filters can match nothing.
   await page.getByRole('option', { name: 'CD' }).click();
   await expect(page.getByText('No items match the selected filters.')).toBeVisible();
+});
+
+test('filters items by status', async ({ page }) => {
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Loaned book',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+  });
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Finished book',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+    status: 'READ',
+  });
+
+  await page.goto('/');
+
+  await page.getByRole('option', { name: 'Read', exact: true }).click();
+  await expect(page.getByText('Loaned book')).not.toBeVisible();
+  await expect(page.getByText('Finished book')).toBeVisible();
+
+  // Clicking again clears the filter.
+  await page.getByRole('option', { name: 'Read', exact: true }).click();
+  await expect(page.getByText('Loaned book')).toBeVisible();
+  await expect(page.getByText('Finished book')).toBeVisible();
+});
+
+test('status filter uses listening wording when only CDs have the status', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    mediaType: 'CD',
+    title: 'Finished CD',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+    status: 'READ',
+  });
+
+  await page.goto('/');
+
+  await page.getByRole('option', { name: 'Listened', exact: true }).click();
+  await expect(page.getByText('Finished CD')).toBeVisible();
 });
 
 test('lists own items without a due date and filters them', async ({
@@ -244,6 +289,73 @@ test('changes a book status to read from the detail modal', async ({ page }) => 
   ).toHaveText('Read');
   const items = await getLoanItems();
   expect(items[0].status).toBe('READ');
+});
+
+test('changes the library from the detail modal', async ({ page }) => {
+  await insertLibrary('Sihlcity');
+  await insertLibrary('Oerlikon');
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Kommissar Pfote',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+  });
+
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'Show details of "Kommissar Pfote"' })
+    .click();
+
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('option', { name: 'Oerlikon' }).click();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+
+  await expect(page.getByRole('cell', { name: 'Oerlikon' })).toBeVisible();
+  const items = await getLoanItems();
+  expect(items[0].library).toBe('Oerlikon');
+});
+
+test('moves an item to my own and back from the detail modal', async ({
+  page,
+}) => {
+  await insertLibrary('Sihlcity');
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Kommissar Pfote',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+  });
+
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'Show details of "Kommissar Pfote"' })
+    .click();
+
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('option', { name: 'My own' }).click();
+
+  // Own items have no due date and only track reading progress.
+  await expect(
+    dialog.getByRole('option', { name: 'Reading', exact: true })
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole('option', { name: 'Loaned', exact: true })
+  ).not.toBeVisible();
+  await expect(dialog.getByText(/Due in/)).not.toBeVisible();
+
+  let items = await getLoanItems();
+  expect(items[0].library).toBeNull();
+  expect(items[0].status).toBe('READING');
+  expect(items[0].due_date).toBeNull();
+
+  // Picking a library again turns it back into a loan with a due date.
+  await dialog.getByRole('option', { name: 'Sihlcity' }).click();
+  await expect(dialog.getByText('Due in 28 days')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+
+  items = await getLoanItems();
+  expect(items[0].library).toBe('Sihlcity');
+  expect(items[0].due_date).not.toBeNull();
 });
 
 test('changes a CD status to listened and back to loaned', async ({ page }) => {

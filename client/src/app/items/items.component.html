@@ -30,6 +30,15 @@
     <mat-chip-option [value]="ownFilter">My own</mat-chip-option>
     }
   </mat-chip-listbox>
+  <mat-chip-listbox
+    aria-label="Filter by status"
+    [value]="statusFilter()"
+    (change)="statusFilter.set($event.value ?? null)"
+  >
+    @for (option of statusOptions(); track option.status) {
+    <mat-chip-option [value]="option.status">{{ option.label }}</mat-chip-option>
+    }
+  </mat-chip-listbox>
 </div>
 @if (filteredItems().length === 0) {
 <p class="empty">No items match the selected filters.</p>
@@ -49,7 +58,7 @@
   </thead>
   <tbody role="rowgroup">
     @for (item of filteredItems(); track item.id) {
-    <tr role="row" [class.done]="isDone(item)" [class.read]="isRead(item)">
+    <tr role="row">
       <td role="cell" class="due-cell">
         @if (item.dueDate) {
         <span
