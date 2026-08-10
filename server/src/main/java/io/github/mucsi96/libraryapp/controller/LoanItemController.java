@@ -44,15 +44,18 @@ public class LoanItemController {
   /**
    * Queues an import. The photos are staged and the response returns
    * immediately, so the phone is free while the AI work happens in the
-   * background — poll {@code /import-jobs} for progress.
+   * background — poll {@code /import-jobs} for progress. The user picks
+   * where the item lives: a library from the predefined list, or — when
+   * {@code library} is omitted — their own shelf.
    */
   @PostMapping("/items/import")
   @ResponseStatus(HttpStatus.ACCEPTED)
   @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
   public ImportJobResponse importItem(
       @RequestParam("front") MultipartFile front,
-      @RequestParam("back") MultipartFile back) {
-    return importJobService.enqueue(front, back);
+      @RequestParam("back") MultipartFile back,
+      @RequestParam(value = "library", required = false) String libraryId) {
+    return importJobService.enqueue(front, back, libraryId);
   }
 
   @PutMapping("/items/{id}/status")

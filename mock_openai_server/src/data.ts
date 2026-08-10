@@ -13,20 +13,18 @@ export interface ExtractedItem {
   title: string | null;
   author: string | null;
   mediaType: string | null;
-  library: string | null;
 }
 
 // Extraction results keyed by the base64 of the submitted front photo.
 export const EXTRACTIONS: { frontImage: string; result: ExtractedItem }[] = [
   {
-    // A book with a hyphenated ISBN-13 and library stickers.
+    // A book with a hyphenated ISBN-13.
     frontImage: IMAGES.yellow,
     result: {
       isbn: '978-3-440-15359-8',
       title: 'Die drei ??? Kids - Diebe im Tierpark',
       author: 'Anne Scheller',
       mediaType: 'BOOK',
-      library: 'Sihlcity',
     },
   },
   {
@@ -37,7 +35,6 @@ export const EXTRACTIONS: { frontImage: string; result: ExtractedItem }[] = [
       title: 'Kei Angscht vor em Hotzeplotz',
       author: 'Otfried Preussler',
       mediaType: 'CD',
-      library: 'Oerlikon',
     },
   },
   {
@@ -48,7 +45,6 @@ export const EXTRACTIONS: { frontImage: string; result: ExtractedItem }[] = [
       title: 'Some item',
       author: null,
       mediaType: 'BOOK',
-      library: null,
     },
   },
 ];

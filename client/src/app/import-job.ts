@@ -3,6 +3,7 @@ import { MediaType } from './loan-item';
 export type ImportJobStatus =
   | 'QUEUED'
   | 'EXTRACTING'
+  | 'NEEDS_ISBN'
   | 'GENERATING_COVER'
   | 'COMPLETED'
   | 'FAILED';
@@ -24,5 +25,8 @@ export interface ImportJob {
   createdAt: string;
 }
 
+/** Jobs the background worker is done with — finished or waiting on the user. */
 export const isSettled = (job: ImportJob): boolean =>
-  job.status === 'COMPLETED' || job.status === 'FAILED';
+  job.status === 'COMPLETED' ||
+  job.status === 'FAILED' ||
+  job.status === 'NEEDS_ISBN';

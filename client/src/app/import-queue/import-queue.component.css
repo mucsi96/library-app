@@ -34,6 +34,26 @@
   border-color: color-mix(in srgb, #ff6b6b 55%, transparent);
 }
 
+.queue-card[data-status='NEEDS_ISBN'] {
+  border-color: color-mix(in srgb, #ffb74d 55%, transparent);
+}
+
+.queue-isbn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.queue-isbn input {
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--bt-outline);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bt-text-strong);
+  font: inherit;
+}
+
 .queue-body {
   flex: 1;
   min-width: 0;

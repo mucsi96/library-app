@@ -45,17 +45,20 @@ public class LoanItemService {
    * item refreshes the loan without duplicating it or losing the read
    * status. Transactional so two queued jobs resolving to the same ISBN
    * cannot race the unique constraint.
+   *
+   * @param library the branch the user picked at import time, or null for
+   *                an item they own — owned items have no due date.
    */
   @Transactional
-  public LoanItem upsertFromExtraction(String isbn13, ExtractedItem extracted) {
-    LocalDate dueDate = LocalDate.now().plusDays(loanPeriodDays);
+  public LoanItem upsertFromExtraction(String isbn13, ExtractedItem extracted, String library) {
+    LocalDate dueDate = library == null ? null : LocalDate.now().plusDays(loanPeriodDays);
 
     return loanItemRepository.save(loanItemRepository.findByIsbn(isbn13)
         .map(existing -> {
           existing.setMediaType(extracted.mediaType());
           existing.setTitle(extracted.title());
           existing.setAuthor(extracted.author());
-          existing.setLibrary(extracted.library());
+          existing.setLibrary(library);
           existing.setDueDate(dueDate);
           // A re-import means the item is borrowed again: returned
           // statuses map back to their on-loan equivalents so read
@@ -72,9 +75,10 @@ public class LoanItemService {
             .mediaType(extracted.mediaType())
             .title(extracted.title())
             .author(extracted.author())
-            .library(extracted.library())
+            .library(library)
             .dueDate(dueDate)
-            .status(LoanStatus.LOANED)
+            // An owned item was never loaned; it starts as being read.
+            .status(library == null ? LoanStatus.READING : LoanStatus.LOANED)
             .build()));
   }
 

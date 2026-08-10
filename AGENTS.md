@@ -48,11 +48,16 @@ Application for tracking books and CDs borrowed from libraries:
   as a colored tag, so finished items aren't borrowed again; the status
   is changed from a detail modal (large cover, ISBN, status chips)
   opened by tapping an item
-- Import a borrowed item by photographing its front and back (camera
-  capture input, so iPhone opens the photo app); GPT-5 extracts ISBN,
-  title, author, media type and library branch from the photos, and the
-  ISBN is validated (ISBN-10 converted, 978/979 prefix and check digit)
-  server-side
+- Import an item by picking its source explicitly — a library from a
+  predefined list managed on the settings page (slug ids derived from the
+  name), or "My own" for items the user owns — then photographing its
+  front and back (camera capture input, so iPhone opens the photo app);
+  GPT-5 extracts ISBN, title, author and media type from the photos (the
+  library is never AI-guessed), and the ISBN is validated (ISBN-10
+  converted, 978/979 prefix and check digit) server-side
+- Own items have no due date, show "My own" instead of a library (with a
+  matching filter chip), and only track reading progress (reading/read;
+  listening/listened for CDs), starting as reading
 - Importing is asynchronous: the upload stages both photos and returns
   202 immediately, so the import page clears itself and the next item can
   be captured right away (batch capture at the library counter). A paced
@@ -61,13 +66,18 @@ Application for tracking books and CDs borrowed from libraries:
   front photo as the placeholder cover and fill in as each stage
   completes. A failed import can be retried without retaking the photos,
   or dismissed
+- When no valid ISBN is readable on the photos the import parks as
+  NEEDS_ISBN instead of failing: the processing card asks for the ISBN,
+  the typed value goes through the same server-side validation, and the
+  job resumes with the staged photos — skipping re-extraction, since the
+  extracted fields were kept
 - Outbound AI calls are rate-limit safe: jobs are claimed one at a time
   with `FOR UPDATE SKIP LOCKED` and gated by a single-row `ai_pacer`
   table, so no more than one job per `import.min-job-interval` runs across
   all replicas. Rate limits and other transient errors back off
   exponentially (honouring `Retry-After`) and give up after
-  `import.max-attempts`; an unreadable ISBN fails immediately without
-  spending further calls
+  `import.max-attempts`; an unreadable ISBN spends no further calls while
+  it waits for manual entry
 - gpt-image-2 generates a cover thumbnail from the front photo with the
   library markings (stickers, labels, barcodes) removed; it is stored on
   disk as `{isbn13}.jpg`, served from an authenticated endpoint, and shown
@@ -76,7 +86,8 @@ Application for tracking books and CDs borrowed from libraries:
   duplicating items, losing the read status, or regenerating the existing
   thumbnail; on re-import a returned item goes back on loan (read &
   returned becomes read, returned unread becomes loaned)
-- The due date is computed as import date + `loan-period-days` (28)
+- The due date is computed as import date + `loan-period-days` (28);
+  own items have none
 
 ## Architecture
 
@@ -130,17 +141,27 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 - `GET /api/environment` - Client configuration (public)
 - `GET /api/items` - List loan items sorted by due date (authenticated)
-- `POST /api/items/import` - Multipart upload of `front` and `back` photos;
-  stages them, queues an import job and returns 202 with the job
+- `GET /api/libraries` - The predefined library list, sorted by name
   (authenticated)
+- `POST /api/libraries` - Add a library by name; the id is a slug of the
+  name, duplicates are rejected (authenticated)
+- `DELETE /api/libraries/{id}` - Remove a library from the list
+  (authenticated)
+- `POST /api/items/import` - Multipart upload of `front` and `back` photos
+  plus an optional `library` (slug from the predefined list; absent means
+  the user's own item); stages the photos, queues an import job and
+  returns 202 with the job (authenticated)
 - `GET /api/import-jobs` - Imports still in flight, plus recently
   completed ones (authenticated)
 - `GET /api/import-jobs/{reference}/photo` - Staged front photo, used as
   the placeholder cover while an import is processed (authenticated)
 - `POST /api/import-jobs/{reference}/retry` - Requeue a failed import
   using the staged photos (authenticated)
-- `DELETE /api/import-jobs/{reference}` - Dismiss a failed import and
-  delete its photos (authenticated)
+- `POST /api/import-jobs/{reference}/isbn` - Manually typed ISBN for an
+  import waiting in NEEDS_ISBN; validates and resumes the job
+  (authenticated)
+- `DELETE /api/import-jobs/{reference}` - Dismiss a failed or
+  ISBN-waiting import and delete its photos (authenticated)
 - `GET /api/thumbnails/{isbn13}` - Cover thumbnail (JPEG, immutable cache,
   authenticated)
 - `PUT /api/items/{id}/status` - Set an item's status (LOANED, READING,
@@ -148,23 +169,26 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 ## Data Model
 
-- **loan_items** (schema `library`) - One row per borrowed item: ISBN-13
-  (unique, import upsert key), media type (BOOK or CD), title, author,
-  library branch, due date, and the status (LOANED, READING, READ,
-  READ_RETURNED or UNREAD_RETURNED)
+- **loan_items** (schema `library`) - One row per item: ISBN-13 (unique,
+  import upsert key), media type (BOOK or CD), title, author, library
+  branch (null for own items), due date (null for own items), and the
+  status (LOANED, READING, READ, READ_RETURNED or UNREAD_RETURNED)
+- **libraries** (schema `library`) - The predefined list managed on the
+  settings page: `id` (slug of the name) and unique `name`
 - **import_jobs** (schema `library`) - One row per queued import: public
-  `reference` (UUID used in URLs), status (QUEUED, EXTRACTING,
-  GENERATING_COVER, COMPLETED, FAILED), staged photo paths, the fields
-  extracted so far, the resulting `loan_item_id`, a user-facing
-  `error_detail`, and the attempt/backoff bookkeeping
+  `reference` (UUID used in URLs), status (QUEUED, EXTRACTING, NEEDS_ISBN,
+  GENERATING_COVER, COMPLETED, FAILED), the library picked at upload (null
+  for own items), staged photo paths, the fields extracted so far, the
+  resulting `loan_item_id`, a user-facing `error_detail`, and the
+  attempt/backoff bookkeeping
 - **ai_pacer** (schema `library`) - Single row holding
   `next_call_allowed_at`, the cluster-wide throttle on outbound AI calls
 - Cover thumbnails live on disk (`storage.directory`, env
   `STORAGE_DIRECTORY`) as `thumbnails/{isbn13}.jpg`, not in the database
 - Uploaded import photos are staged on the same disk as
   `imports/{reference}-front.{ext}` / `-back.{ext}`; they are deleted once
-  the import completes or is dismissed, and kept while it is failed so a
-  retry needs no new photos
+  the import completes or is dismissed, and kept while it is failed or
+  waiting for a manual ISBN so a retry needs no new photos
 
 ## Authorization
 

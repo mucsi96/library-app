@@ -1,5 +1,7 @@
 package io.github.mucsi96.libraryapp.service;
 
+import java.util.Optional;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ImportJobWorker {
 
-  static final String NO_ISBN_DETAIL = "No valid ISBN found on the photos. Retake them with the barcode on the back clearly visible.";
+  static final String NO_ISBN_DETAIL = "No valid ISBN found on the photos. Enter the ISBN to finish the import.";
   static final String UNPROCESSABLE_DETAIL = "The photos could not be processed. Retake them and try again.";
 
   private final ImportJobQueue importJobQueue;
@@ -47,23 +49,29 @@ public class ImportJobWorker {
       PhotoData front = importJobService.loadPhoto(job.getFrontPhoto());
       PhotoData back = importJobService.loadPhoto(job.getBackPhoto());
 
-      ExtractedItem extracted = itemExtractionService.extract(front, back);
+      // A job resumed after manual ISBN entry already knows everything —
+      // re-extracting would spend an AI call on photos that failed once.
+      ExtractedItem extracted = job.getIsbn() == null
+          ? itemExtractionService.extract(front, back)
+          : new ExtractedItem(job.getIsbn(), job.getTitle(), job.getAuthor(), job.getMediaType());
 
-      String isbn13 = IsbnValidator.toIsbn13(extracted.isbn())
-          .orElseThrow(() -> new PermanentImportException(NO_ISBN_DETAIL));
+      Optional<String> isbn13 = IsbnValidator.toIsbn13(extracted.isbn());
+
+      if (isbn13.isEmpty()) {
+        importJobQueue.awaitIsbn(job.getId(), extracted, NO_ISBN_DETAIL);
+        return;
+      }
 
       // Recorded before the cover call so the client can name the item
       // while the picture is still being drawn.
-      importJobQueue.recordExtraction(job.getId(), extracted, isbn13);
+      importJobQueue.recordExtraction(job.getId(), extracted, isbn13.get());
 
-      thumbnailService.ensureThumbnail(isbn13, front);
+      thumbnailService.ensureThumbnail(isbn13.get(), front);
 
-      LoanItem item = loanItemService.upsertFromExtraction(isbn13, extracted);
+      LoanItem item = loanItemService.upsertFromExtraction(isbn13.get(), extracted, job.getLibrary());
 
       importJobQueue.complete(job.getId(), item.getId());
       importJobService.deletePhotos(job);
-    } catch (PermanentImportException e) {
-      importJobQueue.fail(job.getId(), e.getMessage());
     } catch (RuntimeException e) {
       handleFailure(job, e);
     }

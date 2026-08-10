@@ -13,7 +13,9 @@ export interface LoanItem {
   mediaType: MediaType;
   title: string;
   author: string | null;
+  /** Null for the user's own items. */
   library: string | null;
-  dueDate: string;
+  /** Null for the user's own items, which have no return deadline. */
+  dueDate: string | null;
   status: LoanStatus;
 }

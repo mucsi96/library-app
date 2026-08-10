@@ -256,3 +256,34 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 1
+  - changeSet:
+      id: 8-libraries-and-own-items
+      author: mucsi96
+      changes:
+        - createTable:
+            tableName: libraries
+            columns:
+              - column:
+                  name: id
+                  type: text
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: text
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_libraries_name
+        # The branches items were already borrowed from become the initial
+        # predefined list, keyed by a slug of their name.
+        - sql:
+            sql: >-
+              INSERT INTO library.libraries (id, name)
+              SELECT btrim(lower(regexp_replace(library, '[^a-zA-Z0-9]+', '-', 'g')), '-'), library
+              FROM (SELECT DISTINCT library FROM library.loan_items WHERE library IS NOT NULL) AS branches
+        # Own items have no due date.
+        - dropNotNullConstraint:
+            tableName: loan_items
+            columnName: due_date
+            columnDataType: date

@@ -29,6 +29,9 @@ export class ItemsComponent {
   private readonly dialog = inject(MatDialog);
   readonly items = this.itemsService.items;
 
+  // Filter value for the user's own items, which have no library name.
+  readonly ownFilter = 'MY_OWN';
+
   readonly typeFilter = signal<MediaType | null>(null);
   readonly libraryFilter = signal<string | null>(null);
 
@@ -42,13 +45,27 @@ export class ItemsComponent {
     ].sort()
   );
 
+  readonly hasOwnItems = computed(() =>
+    (this.items.value() ?? []).some((item) => item.library === null)
+  );
+
   readonly filteredItems = computed(() =>
     (this.items.value() ?? []).filter(
       (item) =>
         (!this.typeFilter() || item.mediaType === this.typeFilter()) &&
-        (!this.libraryFilter() || item.library === this.libraryFilter())
+        this.matchesLibrary(item)
     )
   );
+
+  private matchesLibrary(item: LoanItem): boolean {
+    const filter = this.libraryFilter();
+    if (!filter) {
+      return true;
+    }
+    return filter === this.ownFilter
+      ? item.library === null
+      : item.library === filter;
+  }
 
   openDetails(item: LoanItem): void {
     this.dialog.open(ItemDetailsComponent, {
@@ -81,15 +98,18 @@ export class ItemsComponent {
   }
 
   isOverdue(item: LoanItem): boolean {
-    return daysUntilDue(item.dueDate) < 0;
+    return item.dueDate !== null && daysUntilDue(item.dueDate) < 0;
   }
 
   isDueSoon(item: LoanItem): boolean {
+    if (item.dueDate === null) {
+      return false;
+    }
     const days = daysUntilDue(item.dueDate);
     return days >= 0 && days <= 7;
   }
 
   dueLabel(item: LoanItem): string {
-    return dueLabel(item.dueDate);
+    return item.dueDate === null ? '' : dueLabel(item.dueDate);
   }
 }

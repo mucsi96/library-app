@@ -13,10 +13,9 @@ import io.github.mucsi96.libraryapp.model.PhotoData;
 public class ItemExtractionService {
 
   static final String SYSTEM_PROMPT = """
-      You extract bibliographic data from photos of a borrowed library item.
-      You receive two photos: the front and the back of a book or CD.
+      You extract bibliographic data from photos of a book or CD.
+      You receive two photos: the front and the back of the item.
       Read the ISBN printed near the barcode on the back.
-      Read the library branch name from library stickers or stamps if present.
       Return null for anything that is not clearly readable.
       """;
 

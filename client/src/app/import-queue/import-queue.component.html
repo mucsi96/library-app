@@ -30,6 +30,38 @@
           Dismiss
         </button>
       </div>
+      } @else if (job.status === 'NEEDS_ISBN') {
+      <p class="queue-error" role="alert">{{ job.errorDetail }}</p>
+      <form class="queue-isbn" (submit)="submitIsbn(job, isbnInput, $event)">
+        <input
+          #isbnInput
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          aria-label="ISBN"
+          placeholder="e.g. 978-3-16-148410-0"
+        />
+        @if (isbnError(job); as message) {
+        <p class="queue-error" role="alert">{{ message }}</p>
+        }
+        <div class="queue-actions">
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="savingIsbn() === job.reference"
+          >
+            Save ISBN
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            [attr.aria-label]="dismissLabel(job)"
+            (click)="dismiss(job)"
+          >
+            Dismiss
+          </button>
+        </div>
+      </form>
       } @else {
       <p class="queue-status">{{ progressLabel(job) }}</p>
       @if (job.status !== 'COMPLETED') {

@@ -1,0 +1,73 @@
+:host {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: var(--bt-text-strong);
+  margin-bottom: 0.5rem;
+}
+
+.libraries h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bt-text-muted);
+}
+
+.hint {
+  color: var(--bt-text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.add-library {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.add-library input {
+  flex: 1 1 14rem;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--bt-outline);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bt-text-strong);
+  font: inherit;
+}
+
+.add-library button {
+  min-height: 44px;
+}
+
+.settings-error {
+  color: #ff8a80;
+  margin: 0 0 1rem;
+}
+
+.library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 28rem;
+}
+
+.library-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--bt-outline);
+  color: var(--bt-text-strong);
+}
+
+.library-list .empty {
+  color: var(--bt-text-muted);
+  border-bottom: none;
+}

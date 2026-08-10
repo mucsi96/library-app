@@ -13,12 +13,15 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.github.mucsi96.libraryapp.model.ImportJobResponse;
 import io.github.mucsi96.libraryapp.model.PhotoData;
+import io.github.mucsi96.libraryapp.model.SubmitIsbnRequest;
 import io.github.mucsi96.libraryapp.service.ImportJobService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -53,6 +56,15 @@ public class ImportJobController {
   @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
   public ImportJobResponse retryImport(@PathVariable UUID reference) {
     return importJobService.retry(reference);
+  }
+
+  /** The manually typed ISBN for an import whose photos had no readable one. */
+  @PostMapping("/import-jobs/{reference}/isbn")
+  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  public ImportJobResponse submitIsbn(
+      @PathVariable UUID reference,
+      @Valid @RequestBody SubmitIsbnRequest request) {
+    return importJobService.submitIsbn(reference, request.isbn());
   }
 
   @DeleteMapping("/import-jobs/{reference}")

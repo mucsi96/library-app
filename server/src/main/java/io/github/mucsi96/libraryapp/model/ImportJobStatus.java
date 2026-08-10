@@ -8,6 +8,8 @@ package io.github.mucsi96.libraryapp.model;
 public enum ImportJobStatus {
   QUEUED,
   EXTRACTING,
+  // Extraction found no valid ISBN; the job waits for the user to type it.
+  NEEDS_ISBN,
   GENERATING_COVER,
   COMPLETED,
   FAILED

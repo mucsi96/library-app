@@ -8,6 +8,9 @@ export const LOAN_STATUSES: readonly LoanStatus[] = [
   'UNREAD_RETURNED',
 ];
 
+// Own items are never loaned or returned; only the reading progress applies.
+export const OWN_STATUSES: readonly LoanStatus[] = ['READING', 'READ'];
+
 const BOOK_LABELS: Record<LoanStatus, string> = {
   LOANED: 'Loaned',
   READING: 'Reading',

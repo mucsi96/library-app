@@ -38,7 +38,8 @@ export interface TestLoanItem {
   title: string;
   author?: string;
   library?: string;
-  dueDate: string;
+  /** Omitted for the user's own items, which have no due date. */
+  dueDate?: string;
   status?: 'LOANED' | 'READING' | 'READ' | 'READ_RETURNED' | 'UNREAD_RETURNED';
 }
 
@@ -55,6 +56,7 @@ export async function cleanupDb() {
   // Import jobs reference loan items, so they go first.
   await query('DELETE FROM library.import_jobs');
   await query('DELETE FROM library.loan_items');
+  await query('DELETE FROM library.libraries');
 }
 
 export function cleanupStorage() {
@@ -106,9 +108,17 @@ export async function insertLoanItem(item: TestLoanItem) {
       item.title,
       item.author ?? null,
       item.library ?? null,
-      item.dueDate,
+      item.dueDate ?? null,
       item.status ?? 'LOANED',
     ]
+  );
+}
+
+/** Seeds the predefined library list the import page picks from. */
+export async function insertLibrary(name: string) {
+  await query(
+    'INSERT INTO library.libraries (id, name) VALUES ($1, $2)',
+    [name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name]
   );
 }
 

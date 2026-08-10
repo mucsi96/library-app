@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
@@ -56,7 +56,7 @@ export class ImportQueueComponent {
   }
 
   dismissLabel(job: ImportJob): string {
-    return `Dismiss failed import of ${this.headline(job)}`;
+    return `Dismiss import of ${this.headline(job)}`;
   }
 
   retry(job: ImportJob): void {
@@ -65,5 +65,38 @@ export class ImportQueueComponent {
 
   dismiss(job: ImportJob): void {
     this.importJobs.dismiss(job);
+  }
+
+  readonly savingIsbn = signal<string | null>(null);
+  private readonly isbnErrors = signal<Record<string, string>>({});
+
+  isbnError(job: ImportJob): string | null {
+    return this.isbnErrors()[job.reference] ?? null;
+  }
+
+  /** Sends the typed ISBN; validation errors stay on this job's card. */
+  async submitIsbn(
+    job: ImportJob,
+    input: HTMLInputElement,
+    event: Event
+  ): Promise<void> {
+    event.preventDefault();
+
+    this.savingIsbn.set(job.reference);
+    this.isbnErrors.update(
+      ({ [job.reference]: _, ...others }) => others
+    );
+    try {
+      await this.importJobs.submitIsbn(job, input.value);
+    } catch (error) {
+      this.isbnErrors.update((errors) => ({
+        ...errors,
+        [job.reference]:
+          (error as { error?: { detail?: string } })?.error?.detail ??
+          'Could not save the ISBN. Please try again.',
+      }));
+    } finally {
+      this.savingIsbn.set(null);
+    }
   }
 }
