@@ -134,7 +134,9 @@ test('lists own items without a due date and filters them', async ({
   await page.goto('/');
 
   const ownRow = page.getByRole('row').filter({ hasText: 'My own book' });
-  await expect(ownRow.getByRole('cell', { name: 'My own' })).toBeVisible();
+  await expect(
+    ownRow.getByRole('cell', { name: 'My own', exact: true })
+  ).toBeVisible();
   await expect(ownRow.getByText(/Due|Overdue/)).not.toBeVisible();
 
   // Own items have their own filter chip next to the libraries.

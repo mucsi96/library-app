@@ -116,7 +116,9 @@ test('imports the user\'s own book without a library or a due date', async ({
   const loans = loansTable(page);
   await expect(loans.getByText(BOOK_TITLE)).toBeVisible();
   const row = loans.getByRole('row').filter({ hasText: BOOK_TITLE });
-  await expect(row.getByRole('cell', { name: 'My own' })).toBeVisible();
+  await expect(
+    row.getByRole('cell', { name: 'My own', exact: true })
+  ).toBeVisible();
   await expect(row.getByText(/Due|Overdue/)).not.toBeVisible();
 
   const items = await getLoanItems();
