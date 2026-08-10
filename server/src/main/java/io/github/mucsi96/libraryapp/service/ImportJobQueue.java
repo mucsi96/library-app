@@ -65,8 +65,23 @@ public class ImportJobQueue {
     job.setTitle(extracted.title());
     job.setAuthor(extracted.author());
     job.setMediaType(extracted.mediaType());
-    job.setLibrary(extracted.library());
     job.setStatus(ImportJobStatus.GENERATING_COVER);
+  }
+
+  /**
+   * Parks a job whose photos yielded no valid ISBN. What was extracted is
+   * kept, and the photos stay staged, so the user only has to type the
+   * ISBN — not retake anything.
+   */
+  @Transactional
+  public void awaitIsbn(Long jobId, ExtractedItem extracted, String detail) {
+    ImportJob job = importJobRepository.findById(jobId).orElseThrow();
+
+    job.setTitle(extracted.title());
+    job.setAuthor(extracted.author());
+    job.setMediaType(extracted.mediaType());
+    job.setStatus(ImportJobStatus.NEEDS_ISBN);
+    job.setErrorDetail(detail);
   }
 
   @Transactional

@@ -55,7 +55,8 @@ public interface ImportJobRepository extends JpaRepository<ImportJob, Long> {
       SELECT job FROM ImportJob job
       WHERE job.status IN (
         io.github.mucsi96.libraryapp.model.ImportJobStatus.COMPLETED,
-        io.github.mucsi96.libraryapp.model.ImportJobStatus.FAILED)
+        io.github.mucsi96.libraryapp.model.ImportJobStatus.FAILED,
+        io.github.mucsi96.libraryapp.model.ImportJobStatus.NEEDS_ISBN)
         AND job.updatedAt < :threshold
       """)
   List<ImportJob> findExpired(@Param("threshold") Instant threshold);

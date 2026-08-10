@@ -115,6 +115,36 @@ test('filters items by type and library', async ({ page }) => {
   await expect(page.getByText('No items match the selected filters.')).toBeVisible();
 });
 
+test('lists own items without a due date and filters them', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'My own book',
+    status: 'READING',
+  });
+  await insertLoanItem({
+    isbn: '9783751300810',
+    mediaType: 'BOOK',
+    title: 'Borrowed book',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(5),
+  });
+
+  await page.goto('/');
+
+  const ownRow = page.getByRole('row').filter({ hasText: 'My own book' });
+  await expect(
+    ownRow.getByRole('cell', { name: 'My own', exact: true })
+  ).toBeVisible();
+  await expect(ownRow.getByText(/Due|Overdue/)).not.toBeVisible();
+
+  // Own items have their own filter chip next to the libraries.
+  await page.getByRole('option', { name: 'My own' }).click();
+  await expect(page.getByText('Borrowed book')).not.toBeVisible();
+  await expect(page.getByText('My own book')).toBeVisible();
+});
+
 test('highlights overdue items', async ({ page }) => {
   await insertLoanItem({
     mediaType: 'BOOK',

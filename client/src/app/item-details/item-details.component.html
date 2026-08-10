@@ -22,16 +22,17 @@
       <dt>ISBN</dt>
       <dd>{{ item().isbn }}</dd>
     </div>
-    } @if (item().library) {
+    }
     <div>
       <dt>Library</dt>
-      <dd>{{ item().library }}</dd>
+      <dd>{{ item().library ?? 'My own' }}</dd>
     </div>
-    }
+    @if (item().dueDate) {
     <div>
       <dt>Due</dt>
       <dd>{{ dueLabel() }}</dd>
     </div>
+    }
   </dl>
   <mat-chip-listbox
     class="status-picker"
@@ -39,7 +40,7 @@
     [value]="item().status"
     (change)="setStatus($event.value ?? null)"
   >
-    @for (status of statuses; track status) {
+    @for (status of statuses(); track status) {
     <mat-chip-option
       [value]="status"
       [selectable]="status !== item().status"

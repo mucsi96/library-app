@@ -40,7 +40,8 @@ public class LoanItem {
 
   private String library;
 
-  @Column(name = "due_date", nullable = false)
+  // Null for the user's own items, which have no return deadline.
+  @Column(name = "due_date")
   private LocalDate dueDate;
 
   @Enumerated(EnumType.STRING)

@@ -1,18 +1,31 @@
-import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { ImportJobsService } from '../import-jobs.service';
 import { ImportQueueComponent } from '../import-queue/import-queue.component';
+import { LibrariesService } from '../libraries.service';
 
 type Side = 'front' | 'back';
+
+/** The "My own" chip. Library values are prefixed so no slug can collide. */
+const OWN = 'own';
 
 @Component({
   selector: 'app-import',
   standalone: true,
   imports: [
     MatButtonModule,
+    MatChipsModule,
     MatIconModule,
     RouterLink,
     ImportQueueComponent,
@@ -22,6 +35,7 @@ type Side = 'front' | 'back';
 })
 export class ImportComponent {
   private readonly importJobs = inject(ImportJobsService);
+  private readonly librariesService = inject(LibrariesService);
   private readonly snackBar = inject(MatSnackBar);
 
   private readonly frontInput =
@@ -40,7 +54,21 @@ export class ImportComponent {
   readonly queueing = signal(false);
   readonly error = signal<string | null>(null);
 
+  readonly libraries = computed(
+    () => this.librariesService.libraries.value() ?? []
+  );
+
+  readonly own = OWN;
+
+  // The chip value: 'library:<id>' or 'own'. Kept across imports so a
+  // stack of books from the same counter needs one selection.
+  readonly destination = signal<string | null>(null);
+
   readonly uploadProgress = this.importJobs.uploadProgress;
+
+  libraryValue(id: string): string {
+    return `library:${id}`;
+  }
 
   onPhotoTaken(side: Side, event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -65,13 +93,16 @@ export class ImportComponent {
    */
   async queueImport(): Promise<void> {
     const { front, back } = this.photos();
-    if (!front || !back) {
+    const destination = this.destination();
+    if (!front || !back || !destination) {
       return;
     }
+    const libraryId =
+      destination === OWN ? null : destination.replace(/^library:/, '');
     this.queueing.set(true);
     this.error.set(null);
     try {
-      await this.importJobs.queueImport(front, back);
+      await this.importJobs.queueImport(front, back, libraryId);
       this.snackBar.open('Added to the import queue', undefined, {
         duration: 3000,
       });

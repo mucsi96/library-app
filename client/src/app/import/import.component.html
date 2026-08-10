@@ -1,11 +1,27 @@
 <h1>Import item</h1>
 <p class="hint">
-  Take a photo of the front and the back of the borrowed item. The ISBN is
-  read from the photos and a clean cover thumbnail is generated in the
-  background — you can keep going while it works.
+  Pick where the item is from, then take a photo of its front and back. The
+  ISBN is read from the photos and a clean cover thumbnail is generated in
+  the background — you can keep going while it works.
 </p>
 
 <app-import-queue />
+
+<div class="destination">
+  <mat-chip-listbox
+    aria-label="Item source"
+    [value]="destination()"
+    (change)="destination.set($event.value ?? null)"
+  >
+    @for (library of libraries(); track library.id) {
+    <mat-chip-option [value]="libraryValue(library.id)">
+      {{ library.name }}
+    </mat-chip-option>
+    }
+    <mat-chip-option [value]="own">My own</mat-chip-option>
+  </mat-chip-listbox>
+  <a routerLink="/settings" class="manage-link">Manage libraries</a>
+</div>
 
 <div class="photos">
   <div class="photo-box">
@@ -55,7 +71,7 @@
   <button
     mat-flat-button
     class="import-button"
-    [disabled]="!photos().front || !photos().back || queueing()"
+    [disabled]="!photos().front || !photos().back || !destination() || queueing()"
     (click)="queueImport()"
   >
     @if (uploadProgress(); as progress) { Uploading {{ progress }}% } @else {

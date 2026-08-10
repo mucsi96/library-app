@@ -7,7 +7,11 @@ import { CoverComponent } from '../cover/cover.component';
 import { ItemsService } from '../items.service';
 import { LoanItem, LoanStatus } from '../loan-item';
 import { dueLabel } from '../utils/due-label';
-import { LOAN_STATUSES, statusLabel } from '../utils/status-label';
+import {
+  LOAN_STATUSES,
+  OWN_STATUSES,
+  statusLabel,
+} from '../utils/status-label';
 
 @Component({
   selector: 'app-item-details',
@@ -26,8 +30,6 @@ export class ItemDetailsComponent {
   private readonly itemsService = inject(ItemsService);
   private readonly initialItem = inject<LoanItem>(MAT_DIALOG_DATA);
 
-  readonly statuses = LOAN_STATUSES;
-
   // Follows the freshly loaded list after a status change; falls back to
   // the opening item while the list reloads.
   readonly item = computed(
@@ -35,6 +37,10 @@ export class ItemDetailsComponent {
       this.itemsService.items
         .value()
         ?.find(({ id }) => id === this.initialItem.id) ?? this.initialItem
+  );
+
+  readonly statuses = computed(() =>
+    this.item().library === null ? OWN_STATUSES : LOAN_STATUSES
   );
 
   setStatus(status: LoanStatus | null): void {
@@ -48,6 +54,7 @@ export class ItemDetailsComponent {
   }
 
   dueLabel(): string {
-    return dueLabel(this.item().dueDate);
+    const dueDate = this.item().dueDate;
+    return dueDate === null ? '' : dueLabel(dueDate);
   }
 }

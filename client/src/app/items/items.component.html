@@ -26,6 +26,8 @@
   >
     @for (library of libraries(); track library) {
     <mat-chip-option [value]="library">{{ library }}</mat-chip-option>
+    } @if (hasOwnItems()) {
+    <mat-chip-option [value]="ownFilter">My own</mat-chip-option>
     }
   </mat-chip-listbox>
 </div>
@@ -49,12 +51,14 @@
     @for (item of filteredItems(); track item.id) {
     <tr role="row" [class.done]="isDone(item)" [class.read]="isRead(item)">
       <td role="cell" class="due-cell">
+        @if (item.dueDate) {
         <span
           [class.due-chip]="isDueSoon(item) || isOverdue(item)"
           [class.due-chip-overdue]="isOverdue(item)"
         >
           {{ dueLabel(item) }}
         </span>
+        }
       </td>
       <td role="cell" class="cover-cell">
         <app-cover [item]="item" />
@@ -74,7 +78,9 @@
           }
         </button>
       </td>
-      <td role="cell" class="library-cell">{{ item.library }}</td>
+      <td role="cell" class="library-cell">
+        {{ item.library ?? 'My own' }}
+      </td>
       <td role="cell" class="status-cell">
         <button
           class="status-chip"

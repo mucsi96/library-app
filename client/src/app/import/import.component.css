@@ -14,6 +14,19 @@ h1 {
   margin-bottom: 2rem;
 }
 
+.destination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.manage-link {
+  color: var(--bt-text-muted);
+  font-size: 0.875rem;
+}
+
 .photos {
   display: flex;
   flex-wrap: wrap;

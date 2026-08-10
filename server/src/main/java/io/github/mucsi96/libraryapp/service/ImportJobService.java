@@ -32,19 +32,25 @@ public class ImportJobService {
   private final ImportJobRepository importJobRepository;
   private final FileStorageService fileStorageService;
   private final ImportProperties importProperties;
+  private final LibraryService libraryService;
 
   /**
    * Stages both photos on disk and queues the job. Returns as soon as the
    * row is committed — no provider call happens on the request thread, so
    * the phone is free the moment the upload finishes.
+   *
+   * @param libraryId the picked library's slug, or null for an item the
+   *                  user owns. Resolved to the display name here, so an
+   *                  unknown id fails the upload instead of the job.
    */
   @Transactional
-  public ImportJobResponse enqueue(MultipartFile front, MultipartFile back) {
+  public ImportJobResponse enqueue(MultipartFile front, MultipartFile back, String libraryId) {
     UUID reference = UUID.randomUUID();
 
     return toResponse(importJobRepository.save(ImportJob.builder()
         .reference(reference)
         .status(ImportJobStatus.QUEUED)
+        .library(libraryId == null ? null : libraryService.requireName(libraryId))
         .frontPhoto(stagePhoto(reference, "front", front))
         .backPhoto(stagePhoto(reference, "back", back))
         .build()));
@@ -80,6 +86,32 @@ public class ImportJobService {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a failed import can be retried.");
     }
 
+    job.setStatus(ImportJobStatus.QUEUED);
+    job.setAttempts(0);
+    job.setErrorDetail(null);
+    job.setNextAttemptAt(Instant.now());
+
+    return toResponse(importJobRepository.save(job));
+  }
+
+  /**
+   * Finishes an import whose photos yielded no readable ISBN. The typed
+   * ISBN goes through the same validation as an extracted one, and the job
+   * requeues to generate the cover from the staged photos.
+   */
+  @Transactional
+  public ImportJobResponse submitIsbn(UUID reference, String isbn) {
+    ImportJob job = require(reference);
+
+    if (job.getStatus() != ImportJobStatus.NEEDS_ISBN) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "This import is not waiting for an ISBN.");
+    }
+
+    String isbn13 = IsbnValidator.toIsbn13(isbn)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "Not a valid ISBN. Check the digits and try again."));
+
+    job.setIsbn(isbn13);
     job.setStatus(ImportJobStatus.QUEUED);
     job.setAttempts(0);
     job.setErrorDetail(null);

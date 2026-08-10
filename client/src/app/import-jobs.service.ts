@@ -52,12 +52,15 @@ export class ImportJobsService {
   );
 
   /**
-   * Jobs worth polling for. A failed job waits for the user, so it never
-   * keeps the timer alive; a completed one still disappears on its own
-   * once the server stops listing it.
+   * Jobs worth polling for. A failed job or one waiting for a manual ISBN
+   * sits until the user acts, so neither keeps the timer alive; a
+   * completed one still disappears on its own once the server stops
+   * listing it.
    */
   private readonly unsettled = computed(() =>
-    (this.jobs.value() ?? []).filter((job) => job.status !== 'FAILED')
+    (this.jobs.value() ?? []).filter(
+      (job) => job.status !== 'FAILED' && job.status !== 'NEEDS_ISBN'
+    )
   );
 
   private readonly foregrounded = signal(!document.hidden);
@@ -113,11 +116,20 @@ export class ImportJobsService {
   /**
    * Uploads both photos and queues the import. Resolves as soon as the
    * server has staged them, so the camera is free again immediately.
+   * The picked library travels with the upload; null marks the item as
+   * the user's own.
    */
-  async queueImport(front: File, back: File): Promise<ImportJob> {
+  async queueImport(
+    front: File,
+    back: File,
+    libraryId: string | null
+  ): Promise<ImportJob> {
     const photos = new FormData();
     photos.append('front', front);
     photos.append('back', back);
+    if (libraryId !== null) {
+      photos.append('library', libraryId);
+    }
 
     this.uploadProgress.set(0);
 
@@ -153,6 +165,23 @@ export class ImportJobsService {
     } finally {
       this.uploadProgress.set(null);
     }
+  }
+
+  /**
+   * Finishes an import whose photos had no readable ISBN. Validation
+   * failures surface inline on the processing card.
+   */
+  async submitIsbn(job: ImportJob, isbn: string): Promise<void> {
+    await fetchJson<ImportJob>(
+      this.http,
+      `/api/import-jobs/${job.reference}/isbn`,
+      {
+        method: 'post',
+        body: { isbn },
+        context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true),
+      }
+    );
+    this.jobs.reload();
   }
 
   async retry(job: ImportJob): Promise<void> {
