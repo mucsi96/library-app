@@ -5,6 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { CoverComponent } from '../cover/cover.component';
 import { ItemsService } from '../items.service';
+import { LibrariesService } from '../libraries.service';
 import { LoanItem, LoanStatus } from '../loan-item';
 import { dueLabel } from '../utils/due-label';
 import {
@@ -28,7 +29,11 @@ import {
 })
 export class ItemDetailsComponent {
   private readonly itemsService = inject(ItemsService);
+  private readonly librariesService = inject(LibrariesService);
   private readonly initialItem = inject<LoanItem>(MAT_DIALOG_DATA);
+
+  // Chip value for the user's own shelf, which has no library id.
+  readonly ownOption = 'MY_OWN';
 
   // Follows the freshly loaded list after a status change; falls back to
   // the opening item while the list reloads.
@@ -43,9 +48,30 @@ export class ItemDetailsComponent {
     this.item().library === null ? OWN_STATUSES : LOAN_STATUSES
   );
 
+  readonly libraries = computed(
+    () => this.librariesService.libraries.value() ?? []
+  );
+
+  // The item stores the library name; the picker works with ids.
+  readonly selectedLibrary = computed(() => {
+    const name = this.item().library;
+    return name === null
+      ? this.ownOption
+      : this.libraries().find((library) => library.name === name)?.id ?? null;
+  });
+
   setStatus(status: LoanStatus | null): void {
     if (status && status !== this.item().status) {
       this.itemsService.setStatus(this.item().id, status);
+    }
+  }
+
+  setLibrary(value: string | null): void {
+    if (value && value !== this.selectedLibrary()) {
+      this.itemsService.setLibrary(
+        this.item().id,
+        value === this.ownOption ? null : value
+      );
     }
   }
 

@@ -45,9 +45,13 @@ Application for tracking books and CDs borrowed from libraries:
 - Loans list with due dates, overdue and due-soon reminders
 - Track each item's status (loaned, reading, read, read & returned,
   returned unread - with listening/listened wording for CDs), each shown
-  as a colored tag, so finished items aren't borrowed again; the status
-  is changed from a detail modal (large cover, ISBN, status chips)
-  opened by tapping an item
+  as a colored tag, so finished items aren't borrowed again; the loans
+  list has quick filter chips for type, library and status
+- A detail modal (large cover, ISBN, status chips) opened by tapping an
+  item changes the status, and moves the item to another library or to
+  "My own": moving to own drops the due date and keeps only reading
+  progress (loaned becomes reading), picking a library for an own item
+  starts a fresh loan period
 - Import an item by picking its source explicitly — a library from a
   predefined list managed on the settings page (slug ids derived from the
   name), or "My own" for items the user owns — then photographing its
@@ -166,6 +170,11 @@ cd test && npx playwright test --ui  # Interactive test runner
   authenticated)
 - `PUT /api/items/{id}/status` - Set an item's status (LOANED, READING,
   READ, READ_RETURNED or UNREAD_RETURNED) (authenticated)
+- `PUT /api/items/{id}/library` - Move an item to a library from the
+  predefined list (by slug id) or, with a null library, to "My own";
+  moving to own clears the due date and maps the status to reading
+  progress, moving an own item to a library starts a fresh loan period
+  (authenticated)
 
 ## Data Model
 

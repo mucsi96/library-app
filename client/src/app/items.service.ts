@@ -21,4 +21,12 @@ export class ItemsService {
     this.items.reload();
   }
 
+  /** Null moves the item to the user's own shelf. */
+  async setLibrary(id: number, libraryId: string | null): Promise<void> {
+    await fetchJson<LoanItem>(this.http, `/api/items/${id}/library`, {
+      method: 'put',
+      body: { library: libraryId },
+    });
+    this.items.reload();
+  }
 }

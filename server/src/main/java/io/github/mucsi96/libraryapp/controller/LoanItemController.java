@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import io.github.mucsi96.libraryapp.model.ImportJobResponse;
 import io.github.mucsi96.libraryapp.model.LoanItemResponse;
+import io.github.mucsi96.libraryapp.model.UpdateLibraryRequest;
 import io.github.mucsi96.libraryapp.model.UpdateStatusRequest;
 import io.github.mucsi96.libraryapp.service.ImportJobService;
 import io.github.mucsi96.libraryapp.service.LoanItemService;
@@ -62,6 +63,12 @@ public class LoanItemController {
   @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
   public LoanItemResponse setStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
     return loanItemService.setStatus(id, request.status());
+  }
+
+  @PutMapping("/items/{id}/library")
+  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  public LoanItemResponse setLibrary(@PathVariable Long id, @RequestBody UpdateLibraryRequest request) {
+    return loanItemService.setLibrary(id, request.library());
   }
 
   @GetMapping(value = "/thumbnails/{isbn:\\d{13}}", produces = MediaType.IMAGE_JPEG_VALUE)

@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LoanItemService {
   private final LoanItemRepository loanItemRepository;
+  private final LibraryService libraryService;
 
   @Value("${loan-period-days}")
   private int loanPeriodDays;
@@ -36,6 +37,35 @@ public class LoanItemService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found: " + id));
 
     item.setStatus(status);
+
+    return toResponse(loanItemRepository.save(item));
+  }
+
+  /**
+   * Moves an item to another library branch, or — when {@code libraryId}
+   * is null — to the user's own shelf. Own items have no due date and only
+   * track reading progress, so moving there drops the loan bookkeeping; a
+   * previously owned item becomes a fresh loan with a full loan period.
+   */
+  @Transactional
+  public LoanItemResponse setLibrary(Long id, String libraryId) {
+    LoanItem item = loanItemRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found: " + id));
+
+    if (libraryId == null) {
+      item.setLibrary(null);
+      item.setDueDate(null);
+      item.setStatus(switch (item.getStatus()) {
+        case LOANED, UNREAD_RETURNED -> LoanStatus.READING;
+        case READ_RETURNED -> LoanStatus.READ;
+        default -> item.getStatus();
+      });
+    } else {
+      if (item.getLibrary() == null) {
+        item.setDueDate(LocalDate.now().plusDays(loanPeriodDays));
+      }
+      item.setLibrary(libraryService.requireName(libraryId));
+    }
 
     return toResponse(loanItemRepository.save(item));
   }

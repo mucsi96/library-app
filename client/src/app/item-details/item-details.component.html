@@ -23,10 +23,6 @@
       <dd>{{ item().isbn }}</dd>
     </div>
     }
-    <div>
-      <dt>Library</dt>
-      <dd>{{ item().library ?? 'My own' }}</dd>
-    </div>
     @if (item().dueDate) {
     <div>
       <dt>Due</dt>
@@ -34,6 +30,7 @@
     </div>
     }
   </dl>
+  <h3 class="picker-label">Status</h3>
   <mat-chip-listbox
     class="status-picker"
     aria-label="Status"
@@ -48,5 +45,27 @@
       {{ statusLabel(status) }}
     </mat-chip-option>
     }
+  </mat-chip-listbox>
+  <h3 class="picker-label">Library</h3>
+  <mat-chip-listbox
+    class="library-picker"
+    aria-label="Library"
+    [value]="selectedLibrary()"
+    (change)="setLibrary($event.value ?? null)"
+  >
+    @for (library of libraries(); track library.id) {
+    <mat-chip-option
+      [value]="library.id"
+      [selectable]="library.id !== selectedLibrary()"
+    >
+      {{ library.name }}
+    </mat-chip-option>
+    }
+    <mat-chip-option
+      [value]="ownOption"
+      [selectable]="ownOption !== selectedLibrary()"
+    >
+      My own
+    </mat-chip-option>
   </mat-chip-listbox>
 </mat-dialog-content>
