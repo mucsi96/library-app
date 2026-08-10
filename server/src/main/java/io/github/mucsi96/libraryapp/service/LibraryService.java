@@ -1,8 +1,6 @@
 package io.github.mucsi96.libraryapp.service;
 
-import java.text.Normalizer;
 import java.util.List;
-import java.util.Locale;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import io.github.mucsi96.libraryapp.entity.Library;
 import io.github.mucsi96.libraryapp.model.LibraryResponse;
 import io.github.mucsi96.libraryapp.repository.LibraryRepository;
+import io.github.mucsi96.libraryapp.support.Slug;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -33,7 +32,7 @@ public class LibraryService {
   @Transactional
   public LibraryResponse create(String name) {
     String trimmed = name.trim();
-    String slug = slugify(trimmed);
+    String slug = Slug.slugify(trimmed);
 
     if (slug.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -65,14 +64,6 @@ public class LibraryService {
     return libraryRepository.findById(id)
         .map(Library::getName)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown library: " + id));
-  }
-
-  private static String slugify(String name) {
-    return Normalizer.normalize(name, Normalizer.Form.NFKD)
-        .replaceAll("\\p{M}", "")
-        .toLowerCase(Locale.ROOT)
-        .replaceAll("[^a-z0-9]+", "-")
-        .replaceAll("^-|-$", "");
   }
 
   private static LibraryResponse toResponse(Library library) {

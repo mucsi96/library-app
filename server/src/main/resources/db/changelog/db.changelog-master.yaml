@@ -277,11 +277,8 @@ databaseChangeLog:
                     uniqueConstraintName: uq_libraries_name
         # The branches items were already borrowed from become the initial
         # predefined list, keyed by a slug of their name.
-        - sql:
-            sql: >-
-              INSERT INTO library.libraries (id, name)
-              SELECT btrim(lower(regexp_replace(library, '[^a-zA-Z0-9]+', '-', 'g')), '-'), library
-              FROM (SELECT DISTINCT library FROM library.loan_items WHERE library IS NOT NULL) AS branches
+        - customChange:
+            class: io.github.mucsi96.libraryapp.migration.SeedLibrariesChange
         # Own items have no due date.
         - dropNotNullConstraint:
             tableName: loan_items
