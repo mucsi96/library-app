@@ -225,7 +225,8 @@ test('asks for the ISBN when none can be read and finishes after manual entry', 
   // Nothing is stored while the import waits for the ISBN.
   expect(await getLoanItems()).toHaveLength(0);
 
-  // A typo is rejected with the import kept waiting.
+  // A typo fails the check-digit validation right on the card, with the
+  // import kept waiting.
   await card.getByLabel('ISBN').fill('978-3-16-148410-9');
   await card.getByRole('button', { name: 'Save ISBN' }).click();
   await expect(card.getByRole('alert').last()).toContainText(

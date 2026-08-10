@@ -5,6 +5,7 @@ import { BarLoaderComponent } from '@mucsi96/angular-material-theme';
 import { CoverComponent, CoverSubject } from '../cover/cover.component';
 import { ImportJob } from '../import-job';
 import { ImportJobsService } from '../import-jobs.service';
+import { toIsbn13 } from '../utils/isbn';
 
 const PROGRESS_LABELS: Record<string, string> = {
   QUEUED: 'Waiting in queue',
@@ -74,7 +75,14 @@ export class ImportQueueComponent {
     return this.isbnErrors()[job.reference] ?? null;
   }
 
-  /** Sends the typed ISBN; validation errors stay on this job's card. */
+  clearIsbnError(job: ImportJob): void {
+    this.isbnErrors.update(({ [job.reference]: _, ...others }) => others);
+  }
+
+  /**
+   * Validates the typed ISBN in place — same rules as the server — and
+   * sends the normalized ISBN-13. Errors stay on this job's card.
+   */
   async submitIsbn(
     job: ImportJob,
     input: HTMLInputElement,
@@ -82,12 +90,22 @@ export class ImportQueueComponent {
   ): Promise<void> {
     event.preventDefault();
 
-    this.savingIsbn.set(job.reference);
     this.isbnErrors.update(
       ({ [job.reference]: _, ...others }) => others
     );
+
+    const isbn13 = toIsbn13(input.value);
+    if (isbn13 === null) {
+      this.isbnErrors.update((errors) => ({
+        ...errors,
+        [job.reference]: 'Not a valid ISBN. Check the digits and try again.',
+      }));
+      return;
+    }
+
+    this.savingIsbn.set(job.reference);
     try {
-      await this.importJobs.submitIsbn(job, input.value);
+      await this.importJobs.submitIsbn(job, isbn13);
     } catch (error) {
       this.isbnErrors.update((errors) => ({
         ...errors,

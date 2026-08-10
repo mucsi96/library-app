@@ -40,6 +40,7 @@
           autocomplete="off"
           aria-label="ISBN"
           placeholder="e.g. 978-3-16-148410-0"
+          (input)="clearIsbnError(job)"
         />
         @if (isbnError(job); as message) {
         <p class="queue-error" role="alert">{{ message }}</p>
