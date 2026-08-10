@@ -1,0 +1,42 @@
+@if (jobs().length) {
+<section class="queue" aria-labelledby="queue-heading">
+  <h2 id="queue-heading">Processing</h2>
+
+  @for (job of jobs(); track job.reference) {
+  <article class="queue-card" [attr.data-status]="job.status">
+    <app-cover [item]="coverSubject(job)" [assetUrl]="photoUrl(job)" />
+
+    <div class="queue-body">
+      <p class="queue-title">{{ headline(job) }}</p>
+
+      @if (job.author) {
+      <p class="queue-author">{{ job.author }}</p>
+      } @if (job.status === 'FAILED') {
+      <p class="queue-error" role="alert">{{ job.errorDetail }}</p>
+      <div class="queue-actions">
+        <button
+          mat-flat-button
+          [attr.aria-label]="retryLabel(job)"
+          (click)="retry(job)"
+        >
+          <mat-icon>refresh</mat-icon>
+          Retry
+        </button>
+        <button
+          mat-stroked-button
+          [attr.aria-label]="dismissLabel(job)"
+          (click)="dismiss(job)"
+        >
+          Dismiss
+        </button>
+      </div>
+      } @else {
+      <p class="queue-status">{{ progressLabel(job) }}</p>
+      @if (job.status !== 'COMPLETED') {
+      <bt-bar-loader label="Import in progress" />
+      } }
+    </div>
+  </article>
+  }
+</section>
+}

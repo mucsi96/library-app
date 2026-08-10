@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import io.github.mucsi96.libraryapp.entity.LoanItem;
@@ -21,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LoanItemService {
   private final LoanItemRepository loanItemRepository;
-  private final ItemExtractionService itemExtractionService;
-  private final ThumbnailService thumbnailService;
 
   @Value("${loan-period-days}")
   private int loanPeriodDays;
@@ -31,24 +28,6 @@ public class LoanItemService {
     return loanItemRepository.findAllByOrderByDueDateAscTitleAsc().stream()
         .map(this::toResponse)
         .toList();
-  }
-
-  /**
-   * Imports one borrowed item from its front and back photos: GPT extracts
-   * the bibliographic data, the ISBN is validated, a cleaned cover
-   * thumbnail is generated, and the item is upserted by ISBN so a
-   * re-borrowed item refreshes its loan without losing the read status.
-   */
-  public LoanItemResponse importItem(MultipartFile front, MultipartFile back) {
-    ExtractedItem extracted = itemExtractionService.extract(front, back);
-
-    String isbn13 = IsbnValidator.toIsbn13(extracted.isbn())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-            "No valid ISBN found on the photos. Retake them with the barcode on the back clearly visible."));
-
-    thumbnailService.ensureThumbnail(isbn13, front);
-
-    return toResponse(upsertItem(isbn13, extracted));
   }
 
   @Transactional
@@ -61,7 +40,14 @@ public class LoanItemService {
     return toResponse(loanItemRepository.save(item));
   }
 
-  private LoanItem upsertItem(String isbn13, ExtractedItem extracted) {
+  /**
+   * Records an extracted item against its ISBN. Re-importing a borrowed
+   * item refreshes the loan without duplicating it or losing the read
+   * status. Transactional so two queued jobs resolving to the same ISBN
+   * cannot race the unique constraint.
+   */
+  @Transactional
+  public LoanItem upsertFromExtraction(String isbn13, ExtractedItem extracted) {
     LocalDate dueDate = LocalDate.now().plusDays(loanPeriodDays);
 
     return loanItemRepository.save(loanItemRepository.findByIsbn(isbn13)

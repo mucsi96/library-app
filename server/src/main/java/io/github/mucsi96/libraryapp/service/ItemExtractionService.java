@@ -2,11 +2,12 @@ package io.github.mucsi96.libraryapp.service;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.content.Media;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import io.github.mucsi96.libraryapp.model.ExtractedItem;
+import io.github.mucsi96.libraryapp.model.PhotoData;
 
 @Service
 public class ItemExtractionService {
@@ -25,7 +26,7 @@ public class ItemExtractionService {
     this.chatClient = chatClientBuilder.build();
   }
 
-  public ExtractedItem extract(MultipartFile front, MultipartFile back) {
+  public ExtractedItem extract(PhotoData front, PhotoData back) {
     return chatClient
         .prompt()
         .system(SYSTEM_PROMPT)
@@ -37,12 +38,10 @@ public class ItemExtractionService {
         .entity(ExtractedItem.class);
   }
 
-  private Media toMedia(MultipartFile photo) {
+  private Media toMedia(PhotoData photo) {
     return Media.builder()
-        .mimeType(photo.getContentType() != null
-            ? MimeTypeUtils.parseMimeType(photo.getContentType())
-            : MimeTypeUtils.IMAGE_JPEG)
-        .data(photo.getResource())
+        .mimeType(MimeTypeUtils.parseMimeType(photo.contentType()))
+        .data(new ByteArrayResource(photo.data()))
         .build();
   }
 }

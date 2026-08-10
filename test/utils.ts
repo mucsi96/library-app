@@ -52,13 +52,31 @@ export async function query(text: string, params?: any[]) {
 }
 
 export async function cleanupDb() {
+  // Import jobs reference loan items, so they go first.
+  await query('DELETE FROM library.import_jobs');
   await query('DELETE FROM library.loan_items');
 }
 
 export function cleanupStorage() {
-  fs.rmSync(path.join(STORAGE_DIR, 'thumbnails'), {
-    recursive: true,
-    force: true,
+  ['thumbnails', 'imports'].forEach((directory) =>
+    fs.rmSync(path.join(STORAGE_DIR, directory), {
+      recursive: true,
+      force: true,
+    })
+  );
+}
+
+/** Arms the mock OpenAI server for the current test. */
+export async function configureMockOpenAI(
+  config: {
+    delayMs?: number;
+    failWith?: { status: number; count: number; retryAfter?: number };
+  } = {}
+) {
+  await fetch('http://localhost:3070/reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
   });
 }
 
@@ -98,6 +116,13 @@ export async function getLoanItems() {
   const result = await query(
     `SELECT *, to_char(due_date, 'YYYY-MM-DD') AS due_date_iso
      FROM library.loan_items ORDER BY title`
+  );
+  return result.rows;
+}
+
+export async function getImportJobs() {
+  const result = await query(
+    'SELECT * FROM library.import_jobs ORDER BY created_at'
   );
   return result.rows;
 }

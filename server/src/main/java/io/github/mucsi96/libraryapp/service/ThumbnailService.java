@@ -1,16 +1,15 @@
 package io.github.mucsi96.libraryapp.service;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.ByteArrayInputStream;
 import java.util.Base64;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.openai.client.OpenAIClient;
 import com.openai.core.MultipartField;
 import com.openai.models.images.ImageEditParams;
 
+import io.github.mucsi96.libraryapp.model.PhotoData;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -41,31 +40,26 @@ public class ThumbnailService {
    * Generates the cleaned cover from the front photo. Skipped when the
    * ISBN already has one, so re-importing an item is free.
    */
-  public void ensureThumbnail(String isbn13, MultipartFile front) {
+  public void ensureThumbnail(String isbn13, PhotoData front) {
     if (hasThumbnail(isbn13)) {
       return;
     }
 
-    final ImageEditParams params;
-    try {
-      params = ImageEditParams.builder()
-          // Filename and content type are set explicitly so the photo is
-          // sent as a proper file part.
-          .image(MultipartField.<ImageEditParams.Image>builder()
-              .value(ImageEditParams.Image.ofInputStream(front.getInputStream()))
-              .filename("front")
-              .contentType(front.getContentType() != null ? front.getContentType() : "image/jpeg")
-              .build())
-          .prompt(PROMPT)
-          .model("gpt-image-2")
-          .size(ImageEditParams.Size.AUTO)
-          .n(1)
-          .outputFormat(ImageEditParams.OutputFormat.JPEG)
-          .outputCompression(75)
-          .build();
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to read front photo", e);
-    }
+    final ImageEditParams params = ImageEditParams.builder()
+        // Filename and content type are set explicitly so the photo is
+        // sent as a proper file part.
+        .image(MultipartField.<ImageEditParams.Image>builder()
+            .value(ImageEditParams.Image.ofInputStream(new ByteArrayInputStream(front.data())))
+            .filename("front")
+            .contentType(front.contentType())
+            .build())
+        .prompt(PROMPT)
+        .model("gpt-image-2")
+        .size(ImageEditParams.Size.AUTO)
+        .n(1)
+        .outputFormat(ImageEditParams.OutputFormat.JPEG)
+        .outputCompression(75)
+        .build();
 
     final byte[] thumbnail = openAIClient.images().edit(params).data().orElseThrow().stream()
         .flatMap(image -> image.b64Json().stream())

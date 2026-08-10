@@ -1,8 +1,11 @@
 <h1>Import item</h1>
 <p class="hint">
   Take a photo of the front and the back of the borrowed item. The ISBN is
-  read from the photos and a clean cover thumbnail is generated.
+  read from the photos and a clean cover thumbnail is generated in the
+  background — you can keep going while it works.
 </p>
+
+<app-import-queue />
 
 <div class="photos">
   <div class="photo-box">
@@ -48,18 +51,15 @@
 <p role="alert" class="import-error">{{ message }}</p>
 }
 
-@if (importing()) {
-<div class="importing">
-  <bt-bar-loader label="Importing item" />
-  <p>Reading the ISBN and generating the cover thumbnail…</p>
+<div class="action-bar">
+  <button
+    mat-flat-button
+    class="import-button"
+    [disabled]="!photos().front || !photos().back || queueing()"
+    (click)="queueImport()"
+  >
+    @if (uploadProgress(); as progress) { Uploading {{ progress }}% } @else {
+    Import item }
+  </button>
+  <a routerLink="/" class="done-link">Done — view loans</a>
 </div>
-} @else {
-<button
-  mat-flat-button
-  class="import-button"
-  [disabled]="!photos().front || !photos().back"
-  (click)="importItem()"
->
-  Import item
-</button>
-}
