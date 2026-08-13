@@ -2,6 +2,7 @@ package io.github.mucsi96.libraryapp.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,30 @@ public class LoanItemService {
     item.setStatus(status);
 
     return toResponse(loanItemRepository.save(item));
+  }
+
+  /**
+   * Gives every listed item the same due date. Own items have no return
+   * deadline, so a selection holding one is rejected outright instead of
+   * being applied to the rest.
+   */
+  @Transactional
+  public List<LoanItemResponse> setDueDate(List<Long> ids, LocalDate dueDate) {
+    List<LoanItem> items = loanItemRepository.findAllById(ids);
+
+    if (items.size() != Set.copyOf(ids).size()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Some items were not found: " + ids);
+    }
+
+    if (items.stream().anyMatch(item -> item.getLibrary() == null)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Own items have no due date");
+    }
+
+    items.forEach(item -> item.setDueDate(dueDate));
+
+    return loanItemRepository.saveAll(items).stream()
+        .map(this::toResponse)
+        .toList();
   }
 
   /**

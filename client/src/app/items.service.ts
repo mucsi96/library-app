@@ -21,6 +21,18 @@ export class ItemsService {
     this.items.reload();
   }
 
+  /**
+   * Gives every listed item the same due date. Own items have none, so the
+   * server rejects a selection holding one.
+   */
+  async setDueDate(ids: number[], dueDate: string): Promise<void> {
+    await fetchJson<LoanItem[]>(this.http, '/api/items/due-date', {
+      method: 'put',
+      body: { ids, dueDate },
+    });
+    this.items.reload();
+  }
+
   /** Null moves the item to the user's own shelf. */
   async setLibrary(id: number, libraryId: string | null): Promise<void> {
     await fetchJson<LoanItem>(this.http, `/api/items/${id}/library`, {
