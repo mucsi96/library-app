@@ -32,3 +32,15 @@
   color: var(--bt-text-strong);
   overflow-wrap: anywhere;
 }
+
+.picker-label {
+  margin: 0 0 0.25rem;
+  color: var(--bt-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-picker {
+  display: block;
+  margin-bottom: 1rem;
+}

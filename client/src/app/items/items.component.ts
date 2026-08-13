@@ -7,9 +7,9 @@ import { CoverComponent } from '../cover/cover.component';
 import { ImportQueueComponent } from '../import-queue/import-queue.component';
 import { ItemDetailsComponent } from '../item-details/item-details.component';
 import { ItemsService } from '../items.service';
-import { LoanItem, MediaType } from '../loan-item';
+import { LoanItem, LoanStatus, MediaType } from '../loan-item';
 import { daysUntilDue, dueLabel } from '../utils/due-label';
-import { statusLabel } from '../utils/status-label';
+import { LOAN_STATUSES, statusLabel } from '../utils/status-label';
 
 @Component({
   selector: 'app-items',
@@ -34,6 +34,7 @@ export class ItemsComponent {
 
   readonly typeFilter = signal<MediaType | null>(null);
   readonly libraryFilter = signal<string | null>(null);
+  readonly statusFilter = signal<LoanStatus | null>(null);
 
   readonly libraries = computed(() =>
     [
@@ -49,10 +50,30 @@ export class ItemsComponent {
     (this.items.value() ?? []).some((item) => item.library === null)
   );
 
+  // One chip per status present in the list; worded for CDs only when no
+  // book carries the status, so a chip never mislabels a book.
+  readonly statusOptions = computed(() => {
+    const items = this.items.value() ?? [];
+    return LOAN_STATUSES.filter((status) =>
+      items.some((item) => item.status === status)
+    ).map((status) => ({
+      status,
+      label: statusLabel(
+        status,
+        items
+          .filter((item) => item.status === status)
+          .every((item) => item.mediaType === 'CD')
+          ? 'CD'
+          : 'BOOK'
+      ),
+    }));
+  });
+
   readonly filteredItems = computed(() =>
     (this.items.value() ?? []).filter(
       (item) =>
         (!this.typeFilter() || item.mediaType === this.typeFilter()) &&
+        (!this.statusFilter() || item.status === this.statusFilter()) &&
         this.matchesLibrary(item)
     )
   );
@@ -87,14 +108,6 @@ export class ItemsComponent {
   // same item unambiguous for assistive tech and role-based selectors.
   detailsActionLabel(item: LoanItem): string {
     return `Show details of "${item.title}"`;
-  }
-
-  isDone(item: LoanItem): boolean {
-    return item.status !== 'LOANED' && item.status !== 'READING';
-  }
-
-  isRead(item: LoanItem): boolean {
-    return item.status === 'READ' || item.status === 'READ_RETURNED';
   }
 
   isOverdue(item: LoanItem): boolean {

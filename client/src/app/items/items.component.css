@@ -125,14 +125,6 @@ h1 {
   font-size: 0.85rem;
 }
 
-tr.done td {
-  opacity: 0.5;
-}
-
-tr.read .title {
-  text-decoration: line-through;
-}
-
 .page-loading {
   display: flex;
   justify-content: center;
