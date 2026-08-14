@@ -287,3 +287,16 @@ databaseChangeLog:
             tableName: loan_items
             columnName: due_date
             columnDataType: date
+  - changeSet:
+      id: 9-own-items-start-unread
+      author: mucsi96
+      changes:
+        # Own items used to start as READING even though the user had not
+        # opened them; an untouched own item is NOT_STARTED from now on.
+        - update:
+            tableName: loan_items
+            columns:
+              - column:
+                  name: status
+                  value: NOT_STARTED
+            where: library IS NULL AND status = 'READING'

@@ -13,7 +13,7 @@ import io.github.mucsi96.libraryapp.model.PhotoData;
 public class ItemExtractionService {
 
   static final String SYSTEM_PROMPT = """
-      You extract bibliographic data from photos of a book or CD.
+      You extract bibliographic data from photos of a book, CD or DVD.
       You receive two photos: the front and the back of the item.
       Read the ISBN printed near the barcode on the back.
       Return null for anything that is not clearly readable.

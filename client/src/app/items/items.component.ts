@@ -15,7 +15,11 @@ import { ItemDetailsComponent } from '../item-details/item-details.component';
 import { ItemsService } from '../items.service';
 import { LoanItem, LoanStatus, MediaType } from '../loan-item';
 import { daysUntilDue, dueLabel } from '../utils/due-label';
-import { LOAN_STATUSES, statusLabel } from '../utils/status-label';
+import {
+  ALL_STATUSES,
+  mediaTypeLabel,
+  statusLabel,
+} from '../utils/status-label';
 
 @Component({
   selector: 'app-items',
@@ -64,23 +68,29 @@ export class ItemsComponent {
     (this.items.value() ?? []).some((item) => item.library === null)
   );
 
-  // One chip per status present in the list; worded for CDs only when no
-  // book carries the status, so a chip never mislabels a book.
+  // One chip per status present in the list; worded for a medium only when
+  // every item carrying the status shares it, so a chip never mislabels an
+  // item of another kind.
   readonly statusOptions = computed(() => {
     const items = this.items.value() ?? [];
-    return LOAN_STATUSES.filter((status) =>
+    return ALL_STATUSES.filter((status) =>
       items.some((item) => item.status === status)
-    ).map((status) => ({
-      status,
-      label: statusLabel(
+    ).map((status) => {
+      const mediaTypes = [
+        ...new Set(
+          items
+            .filter((item) => item.status === status)
+            .map((item) => item.mediaType)
+        ),
+      ];
+      return {
         status,
-        items
-          .filter((item) => item.status === status)
-          .every((item) => item.mediaType === 'CD')
-          ? 'CD'
-          : 'BOOK'
-      ),
-    }));
+        label: statusLabel(
+          status,
+          mediaTypes.length === 1 ? mediaTypes[0] : 'BOOK'
+        ),
+      };
+    });
   });
 
   readonly filteredItems = computed(() =>
@@ -241,6 +251,10 @@ export class ItemsComponent {
 
   statusLabel(item: LoanItem): string {
     return statusLabel(item.status, item.mediaType);
+  }
+
+  mediaTypeLabel(item: LoanItem): string {
+    return mediaTypeLabel(item.mediaType);
   }
 
   statusActionLabel(item: LoanItem): string {

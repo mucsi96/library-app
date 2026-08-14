@@ -44,6 +44,10 @@ for container in $CONTAINERS; do
       echo "  $container is healthy"
       break
     fi
+    # Newer GitHub runner images (ubuntu24/20260810+) stopped firing
+    # podman's timer-driven healthchecks, leaving containers "starting"
+    # forever; probing actively keeps the wait working everywhere.
+    podman healthcheck run "$container" >/dev/null 2>&1 || true
     sleep 2
     ELAPSED=$((ELAPSED + 2))
   done

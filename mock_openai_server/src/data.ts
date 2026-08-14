@@ -6,6 +6,7 @@ export const IMAGES = {
   red: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8AARIQB46hC+ioEAGX8E/cKr6qsAAAAAElFTkSuQmCC',
   blue: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPj/n4EIwDiqkL4KAVIQE/f1/NxEAAAAAElFTkSuQmCC',
   green: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFElEQVR42mNk+A+ERADGUYX0VQgAXAYT9xTSUocAAAAASUVORK5CYII=',
+  purple: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAEklEQVR42mNoYGjAgxhGpbEhAJC6ZAEYInNtAAAAAElFTkSuQmCC',
 };
 
 export interface ExtractedItem {
@@ -35,6 +36,16 @@ export const EXTRACTIONS: { frontImage: string; result: ExtractedItem }[] = [
       title: 'Kei Angscht vor em Hotzeplotz',
       author: 'Otfried Preussler',
       mediaType: 'CD',
+    },
+  },
+  {
+    // A DVD with an ISBN-13.
+    frontImage: IMAGES.purple,
+    result: {
+      isbn: '978-3-16-148410-0',
+      title: 'Die Sendung mit der Maus',
+      author: 'Armin Maiwald',
+      mediaType: 'DVD',
     },
   },
   {

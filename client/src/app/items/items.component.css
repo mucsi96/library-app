@@ -58,6 +58,11 @@ h1 {
   color: #ffcc80;
 }
 
+.status-chip[data-status='NOT_STARTED'] {
+  background: color-mix(in srgb, #78909c 25%, transparent);
+  color: #b0bec5;
+}
+
 .status-chip[data-status='READING'] {
   background: color-mix(in srgb, #42a5f5 25%, transparent);
   color: #90caf9;

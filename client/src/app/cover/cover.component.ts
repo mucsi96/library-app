@@ -1,8 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, input, resource } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { LoanItem } from '../loan-item';
+import { LoanItem, MediaType } from '../loan-item';
 import { fetchAsset } from '../utils/fetchAsset';
+
+const PLACEHOLDER_ICONS: Record<MediaType, string> = {
+  BOOK: 'menu_book',
+  CD: 'album',
+  DVD: 'movie',
+};
 
 /** The little a cover needs to know about what it is showing. */
 export type CoverSubject = Pick<LoanItem, 'isbn' | 'title' | 'mediaType'>;
@@ -35,6 +41,10 @@ export class CoverComponent {
 
   coverLabel(): string {
     return `Cover of "${this.item().title}"`;
+  }
+
+  placeholderIcon(): string {
+    return PLACEHOLDER_ICONS[this.item().mediaType];
   }
 
   private imageUrl(): string | null {

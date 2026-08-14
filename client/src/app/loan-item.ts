@@ -1,7 +1,8 @@
-export type MediaType = 'BOOK' | 'CD';
+export type MediaType = 'BOOK' | 'CD' | 'DVD';
 
 export type LoanStatus =
   | 'LOANED'
+  | 'NOT_STARTED'
   | 'READING'
   | 'READ'
   | 'READ_RETURNED'
