@@ -292,11 +292,11 @@ databaseChangeLog:
       author: mucsi96
       changes:
         # Own items used to start as READING even though the user had not
-        # opened them; an untouched own item is UNREAD from now on.
+        # opened them; an untouched own item is NOT_STARTED from now on.
         - update:
             tableName: loan_items
             columns:
               - column:
                   name: status
-                  value: UNREAD
+                  value: NOT_STARTED
             where: library IS NULL AND status = 'READING'

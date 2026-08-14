@@ -128,7 +128,7 @@ test('imports the user\'s own book without a library or a due date', async ({
     isbn: '9783440153598',
     library: null,
     due_date: null,
-    status: 'UNREAD',
+    status: 'NOT_STARTED',
   });
 
   // Own items only track reading progress - no loan statuses.

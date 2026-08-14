@@ -176,7 +176,7 @@ cd test && npx playwright test --ui  # Interactive test runner
   ISBN-waiting import and delete its photos (authenticated)
 - `GET /api/thumbnails/{isbn13}` - Cover thumbnail (JPEG, immutable cache,
   authenticated)
-- `PUT /api/items/{id}/status` - Set an item's status (LOANED, UNREAD,
+- `PUT /api/items/{id}/status` - Set an item's status (LOANED, NOT_STARTED,
   READING, READ, READ_RETURNED or UNREAD_RETURNED) (authenticated)
 - `PUT /api/items/{id}/library` - Move an item to a library from the
   predefined list (by slug id) or, with a null library, to "My own";
@@ -192,7 +192,7 @@ cd test && npx playwright test --ui  # Interactive test runner
 - **loan_items** (schema `library`) - One row per item: ISBN-13 (unique,
   import upsert key), media type (BOOK, CD or DVD), title, author, library
   branch (null for own items), due date (null for own items), and the
-  status (LOANED, UNREAD, READING, READ, READ_RETURNED or
+  status (LOANED, NOT_STARTED, READING, READ, READ_RETURNED or
   UNREAD_RETURNED)
 - **libraries** (schema `library`) - The predefined list managed on the
   settings page: `id` (slug of the name) and unique `name`

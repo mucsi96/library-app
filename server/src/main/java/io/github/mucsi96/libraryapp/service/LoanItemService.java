@@ -129,7 +129,7 @@ public class LoanItemService {
             .dueDate(dueDate)
             // An owned item was never loaned; it sits on the shelf
             // untouched until the user starts it.
-            .status(library == null ? LoanStatus.UNREAD : LoanStatus.LOANED)
+            .status(library == null ? LoanStatus.NOT_STARTED : LoanStatus.LOANED)
             .build()));
   }
 
@@ -139,7 +139,7 @@ public class LoanItemService {
    */
   private LoanStatus toOwnStatus(LoanStatus status) {
     return switch (status) {
-      case LOANED, UNREAD_RETURNED -> LoanStatus.UNREAD;
+      case LOANED, UNREAD_RETURNED -> LoanStatus.NOT_STARTED;
       case READ_RETURNED -> LoanStatus.READ;
       default -> status;
     };
@@ -151,7 +151,7 @@ public class LoanItemService {
    */
   private LoanStatus toLoanedStatus(LoanStatus status) {
     return switch (status) {
-      case UNREAD, UNREAD_RETURNED -> LoanStatus.LOANED;
+      case NOT_STARTED, UNREAD_RETURNED -> LoanStatus.LOANED;
       case READ_RETURNED -> LoanStatus.READ;
       default -> status;
     };

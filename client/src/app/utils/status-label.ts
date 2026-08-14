@@ -12,12 +12,12 @@ export const LOAN_STATUSES: readonly LoanStatus[] = [
 
 // Own items are never loaned or returned; they sit unread on the shelf
 // until the user starts them, then only the progress applies.
-export const OWN_STATUSES: readonly LoanStatus[] = ['UNREAD', 'READING', 'READ'];
+export const OWN_STATUSES: readonly LoanStatus[] = ['NOT_STARTED', 'READING', 'READ'];
 
 // Every status an item can carry, for the filter chips.
 export const ALL_STATUSES: readonly LoanStatus[] = [
   'LOANED',
-  'UNREAD',
+  'NOT_STARTED',
   'READING',
   'READ',
   'READ_RETURNED',
@@ -26,7 +26,7 @@ export const ALL_STATUSES: readonly LoanStatus[] = [
 
 const BOOK_LABELS: Record<LoanStatus, string> = {
   LOANED: 'Loaned',
-  UNREAD: 'Unread',
+  NOT_STARTED: 'Unread',
   READING: 'Reading',
   READ: 'Read',
   READ_RETURNED: 'Read & returned',
@@ -35,7 +35,7 @@ const BOOK_LABELS: Record<LoanStatus, string> = {
 
 const CD_LABELS: Record<LoanStatus, string> = {
   ...BOOK_LABELS,
-  UNREAD: 'Unlistened',
+  NOT_STARTED: 'Unlistened',
   READING: 'Listening',
   READ: 'Listened',
   READ_RETURNED: 'Listened & returned',
@@ -44,7 +44,7 @@ const CD_LABELS: Record<LoanStatus, string> = {
 
 const DVD_LABELS: Record<LoanStatus, string> = {
   ...BOOK_LABELS,
-  UNREAD: 'Unwatched',
+  NOT_STARTED: 'Unwatched',
   READING: 'Watching',
   READ: 'Watched',
   READ_RETURNED: 'Watched & returned',

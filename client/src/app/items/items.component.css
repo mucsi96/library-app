@@ -58,7 +58,7 @@ h1 {
   color: #ffcc80;
 }
 
-.status-chip[data-status='UNREAD'] {
+.status-chip[data-status='NOT_STARTED'] {
   background: color-mix(in srgb, #78909c 25%, transparent);
   color: #b0bec5;
 }

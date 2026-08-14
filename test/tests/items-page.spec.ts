@@ -188,7 +188,7 @@ test('shows an own unwatched DVD with watching statuses', async ({ page }) => {
   await insertLoanItem({
     mediaType: 'DVD',
     title: 'My own DVD',
-    status: 'UNREAD',
+    status: 'NOT_STARTED',
   });
 
   await page.goto('/');
@@ -556,7 +556,7 @@ test('moves an item to my own and back from the detail modal', async ({
 
   let items = await getLoanItems();
   expect(items[0].library).toBeNull();
-  expect(items[0].status).toBe('UNREAD');
+  expect(items[0].status).toBe('NOT_STARTED');
   expect(items[0].due_date).toBeNull();
 
   // Picking a library again turns it back into a loan with a due date, and

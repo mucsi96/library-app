@@ -43,7 +43,7 @@ export interface TestLoanItem {
   dueDate?: string;
   status?:
     | 'LOANED'
-    | 'UNREAD'
+    | 'NOT_STARTED'
     | 'READING'
     | 'READ'
     | 'READ_RETURNED'
