@@ -14,7 +14,7 @@
   <mat-chip-listbox
     aria-label="Filter by type"
     [value]="typeFilter()"
-    (change)="typeFilter.set($event.value ?? null)"
+    (change)="setTypeFilter($event.value ?? null)"
   >
     <mat-chip-option value="BOOK">Book</mat-chip-option>
     <mat-chip-option value="CD">CD</mat-chip-option>
@@ -22,7 +22,7 @@
   <mat-chip-listbox
     aria-label="Filter by library"
     [value]="libraryFilter()"
-    (change)="libraryFilter.set($event.value ?? null)"
+    (change)="setLibraryFilter($event.value ?? null)"
   >
     @for (library of libraries(); track library) {
     <mat-chip-option [value]="library">{{ library }}</mat-chip-option>
@@ -33,21 +33,43 @@
   <mat-chip-listbox
     aria-label="Filter by status"
     [value]="statusFilter()"
-    (change)="statusFilter.set($event.value ?? null)"
+    (change)="setStatusFilter($event.value ?? null)"
   >
     @for (option of statusOptions(); track option.status) {
     <mat-chip-option [value]="option.status">{{ option.label }}</mat-chip-option>
     }
   </mat-chip-listbox>
 </div>
+
+<div class="list-actions">
+  @if (selecting()) {
+  <mat-checkbox
+    [checked]="allSelected()"
+    [indeterminate]="someSelected()"
+    (change)="toggleAll()"
+  >
+    Select all
+  </mat-checkbox>
+  <button mat-button (click)="cancelSelection()">Cancel</button>
+  } @else {
+  <button mat-stroked-button (click)="startSelecting()">
+    <mat-icon>checklist</mat-icon>
+    Select
+  </button>
+  }
+</div>
+
 @if (filteredItems().length === 0) {
 <p class="empty">No items match the selected filters.</p>
 } @else {
 <!-- Roles are explicit because the mobile card layout overrides the
      table display, which otherwise strips them. -->
-<table class="items-table" role="table">
+<table class="items-table" [class.selecting]="selecting()" role="table">
   <thead role="rowgroup">
     <tr role="row">
+      @if (selecting()) {
+      <th role="columnheader">Select</th>
+      }
       <th role="columnheader">Due</th>
       <th role="columnheader">Cover</th>
       <th role="columnheader">Type</th>
@@ -58,7 +80,16 @@
   </thead>
   <tbody role="rowgroup">
     @for (item of filteredItems(); track item.id) {
-    <tr role="row">
+    <tr role="row" [class.selected-row]="selecting() && isSelected(item)">
+      @if (selecting()) {
+      <td role="cell" class="select-cell">
+        <mat-checkbox
+          [checked]="isSelected(item)"
+          [aria-label]="selectActionLabel(item)"
+          (change)="toggle(item)"
+        />
+      </td>
+      }
       <td role="cell" class="due-cell">
         @if (item.dueDate) {
         <span
@@ -104,4 +135,24 @@
     }
   </tbody>
 </table>
+} @if (selecting()) {
+<!-- Sticky at the bottom, within thumb reach and clear of the iOS home
+     indicator, the way a phone shows a contextual action bar. -->
+<div class="selection-bar" role="region" aria-label="Selection actions">
+  <p class="selection-count" aria-live="polite">{{ selectionLabel() }}</p>
+  @if (ownSelected()) {
+  <p class="selection-hint">
+    Own items have no due date. Unselect them to set one.
+  </p>
+  }
+  <button
+    mat-flat-button
+    class="due-date-button"
+    [disabled]="!selectedItems().length || ownSelected() || saving()"
+    (click)="changeDueDate()"
+  >
+    <mat-icon>event</mat-icon>
+    Set due date
+  </button>
+</div>
 } } }

@@ -47,6 +47,12 @@ Application for tracking books and CDs borrowed from libraries:
   returned unread - with listening/listened wording for CDs), each shown
   as a colored tag, so finished items aren't borrowed again; the loans
   list has quick filter chips for type, library and status
+- A selection mode on the loans list ticks individual rows or every row
+  matching the quick filters at once, and a sticky bottom bar sets one new
+  due date for the whole selection — the stack renewed at the counter in
+  one go. Narrowing a filter drops the rows it hides out of the selection.
+  Own items have no deadline, so a selection holding one offers no due
+  date change (the server rejects it too)
 - A detail modal (large cover, ISBN, status chips) opened by tapping an
   item changes the status, and moves the item to another library or to
   "My own": moving to own drops the due date and keeps only reading
@@ -175,6 +181,9 @@ cd test && npx playwright test --ui  # Interactive test runner
   moving to own clears the due date and maps the status to reading
   progress, moving an own item to a library starts a fresh loan period
   (authenticated)
+- `PUT /api/items/due-date` - Give every item in `ids` the same `dueDate`;
+  an unknown id is a 404 and a selection containing an own item is a 400,
+  so the change is never applied in part (authenticated)
 
 ## Data Model
 

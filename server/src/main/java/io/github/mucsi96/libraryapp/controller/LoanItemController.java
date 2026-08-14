@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import io.github.mucsi96.libraryapp.model.ImportJobResponse;
 import io.github.mucsi96.libraryapp.model.LoanItemResponse;
+import io.github.mucsi96.libraryapp.model.UpdateDueDateRequest;
 import io.github.mucsi96.libraryapp.model.UpdateLibraryRequest;
 import io.github.mucsi96.libraryapp.model.UpdateStatusRequest;
 import io.github.mucsi96.libraryapp.service.ImportJobService;
@@ -57,6 +58,16 @@ public class LoanItemController {
       @RequestParam("back") MultipartFile back,
       @RequestParam(value = "library", required = false) String libraryId) {
     return importJobService.enqueue(front, back, libraryId);
+  }
+
+  /**
+   * Bulk due-date change for the items selected in the loans list, so a
+   * stack renewed at the counter is updated in one go.
+   */
+  @PutMapping("/items/due-date")
+  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  public List<LoanItemResponse> setDueDate(@Valid @RequestBody UpdateDueDateRequest request) {
+    return loanItemService.setDueDate(request.ids(), request.dueDate());
   }
 
   @PutMapping("/items/{id}/status")

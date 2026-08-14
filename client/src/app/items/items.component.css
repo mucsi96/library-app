@@ -100,6 +100,56 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.list-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  min-height: 44px;
+}
+
+.select-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.selected-row td {
+  background: color-mix(in srgb, var(--bt-text-default) 8%, transparent);
+}
+
+/* Sticky so the action stays within thumb reach while the list scrolls,
+   and padded clear of the iOS home indicator. */
+.selection-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--bt-outline);
+  background: var(--bt-surface-0);
+}
+
+.selection-count {
+  margin: 0;
+  color: var(--bt-text-strong);
+  font-weight: 600;
+}
+
+.selection-hint {
+  margin: 0;
+  color: var(--bt-text-muted);
+  font-size: 0.875rem;
+}
+
+.due-date-button {
+  width: 100%;
+  min-height: 48px;
+}
+
 .due-chip {
   display: inline-block;
   padding: 0.1rem 0.5rem;
@@ -161,9 +211,32 @@ h1 {
     border-radius: 12px;
   }
 
+  /* Selection mode adds a checkbox column ahead of the cover, keeping the
+     rest of the card untouched. */
+  .items-table.selecting tr {
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas:
+      'select cover title   title'
+      'select cover type    library'
+      'select cover due     status';
+  }
+
   .items-table td {
     padding: 0;
     border-bottom: none;
+  }
+
+  .select-cell {
+    grid-area: select;
+    width: auto;
+  }
+
+  .items-table tr.selected-row {
+    border-color: color-mix(in srgb, var(--bt-text-strong) 45%, transparent);
+  }
+
+  .selected-row td {
+    background: none;
   }
 
   .cover-cell {

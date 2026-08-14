@@ -190,6 +190,163 @@ test('lists own items without a due date and filters them', async ({
   await expect(page.getByText('My own book')).toBeVisible();
 });
 
+test('sets a new due date for several selected items at once', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Kommissar Pfote',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(3),
+  });
+  await insertLoanItem({
+    mediaType: 'CD',
+    title: 'Kei Angscht vor em Hotzeplotz',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(3),
+  });
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids',
+    library: 'Oerlikon',
+    dueDate: daysFromToday(3),
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+
+  await page.getByRole('checkbox', { name: 'Select "Kommissar Pfote"' }).check();
+  await page
+    .getByRole('checkbox', { name: 'Select "Kei Angscht vor em Hotzeplotz"' })
+    .check();
+  await expect(page.getByText('2 items selected')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Set due date' }).click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(
+    dialog.getByRole('heading', { name: 'Set due date for 2 items' })
+  ).toBeVisible();
+  await dialog.getByLabel('Due date').fill(daysFromToday(20));
+  await dialog.getByRole('button', { name: 'Save due date' }).click();
+
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByText('Due in 20 days')).toHaveCount(2);
+
+  const dueDates = new Map(
+    (await getLoanItems()).map((item) => [item.title, item.due_date_iso])
+  );
+  expect(dueDates.get('Kommissar Pfote')).toBe(daysFromToday(20));
+  expect(dueDates.get('Kei Angscht vor em Hotzeplotz')).toBe(daysFromToday(20));
+  // The unselected item keeps its own deadline.
+  expect(dueDates.get('Die drei ??? Kids')).toBe(daysFromToday(3));
+});
+
+test('selects every item matching the quick filters at once', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Kommissar Pfote',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(3),
+  });
+  await insertLoanItem({
+    mediaType: 'CD',
+    title: 'Kei Angscht vor em Hotzeplotz',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(3),
+  });
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Die drei ??? Kids',
+    library: 'Oerlikon',
+    dueDate: daysFromToday(3),
+  });
+
+  await page.goto('/');
+  await page.getByRole('option', { name: 'Sihlcity' }).click();
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Select all' }).check();
+
+  await expect(page.getByText('2 items selected')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Set due date' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Due date').fill(daysFromToday(28));
+  await dialog.getByRole('button', { name: 'Save due date' }).click();
+
+  await expect(page.getByText('Due date updated for 2 items')).toBeVisible();
+
+  const dueDates = new Map(
+    (await getLoanItems()).map((item) => [item.title, item.due_date_iso])
+  );
+  expect(dueDates.get('Kommissar Pfote')).toBe(daysFromToday(28));
+  expect(dueDates.get('Kei Angscht vor em Hotzeplotz')).toBe(daysFromToday(28));
+  // The item hidden by the library filter is untouched.
+  expect(dueDates.get('Die drei ??? Kids')).toBe(daysFromToday(3));
+});
+
+test('offers no due date change while an own item is selected', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'My own book',
+    status: 'READING',
+  });
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Borrowed book',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(5),
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Select all' }).check();
+
+  await expect(
+    page.getByText('Own items have no due date. Unselect them to set one.')
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Set due date' })).toBeDisabled();
+
+  // Dropping the own item makes the bulk change available again.
+  await page.getByRole('checkbox', { name: 'Select "My own book"' }).uncheck();
+  await expect(page.getByText('1 item selected')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Set due date' })).toBeEnabled();
+});
+
+test('drops items hidden by a filter change out of the selection', async ({
+  page,
+}) => {
+  await insertLoanItem({
+    mediaType: 'BOOK',
+    title: 'Kommissar Pfote',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(3),
+  });
+  await insertLoanItem({
+    mediaType: 'CD',
+    title: 'Kei Angscht vor em Hotzeplotz',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(3),
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Select all' }).check();
+  await expect(page.getByText('2 items selected')).toBeVisible();
+
+  // The CD leaves the list, so it leaves the selection - and clearing the
+  // filter again does not bring it back selected.
+  await page.getByRole('option', { name: 'Book', exact: true }).click();
+  await expect(page.getByText('1 item selected')).toBeVisible();
+
+  await page.getByRole('option', { name: 'Book', exact: true }).click();
+  await expect(page.getByText('1 item selected')).toBeVisible();
+});
+
 test('highlights overdue items', async ({ page }) => {
   await insertLoanItem({
     mediaType: 'BOOK',
