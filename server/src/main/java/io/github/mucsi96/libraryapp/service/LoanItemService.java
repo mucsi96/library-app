@@ -80,14 +80,12 @@ public class LoanItemService {
     if (libraryId == null) {
       item.setLibrary(null);
       item.setDueDate(null);
-      item.setStatus(switch (item.getStatus()) {
-        case LOANED, UNREAD_RETURNED -> LoanStatus.READING;
-        case READ_RETURNED -> LoanStatus.READ;
-        default -> item.getStatus();
-      });
+      item.setStatus(toOwnStatus(item.getStatus()));
     } else {
       if (item.getLibrary() == null) {
         item.setDueDate(LocalDate.now().plusDays(loanPeriodDays));
+        // An own item has a shelf status; borrowing it starts a loan.
+        item.setStatus(toLoanedStatus(item.getStatus()));
       }
       item.setLibrary(libraryService.requireName(libraryId));
     }
@@ -115,14 +113,11 @@ public class LoanItemService {
           existing.setAuthor(extracted.author());
           existing.setLibrary(library);
           existing.setDueDate(dueDate);
-          // A re-import means the item is borrowed again: returned
-          // statuses map back to their on-loan equivalents so read
-          // progress is kept.
-          existing.setStatus(switch (existing.getStatus()) {
-            case READ_RETURNED -> LoanStatus.READ;
-            case UNREAD_RETURNED -> LoanStatus.LOANED;
-            default -> existing.getStatus();
-          });
+          // A re-import puts the item back on the picked shelf: statuses
+          // map to their equivalents there so read progress is kept.
+          existing.setStatus(library == null
+              ? toOwnStatus(existing.getStatus())
+              : toLoanedStatus(existing.getStatus()));
           return existing;
         })
         .orElseGet(() -> LoanItem.builder()
@@ -132,9 +127,34 @@ public class LoanItemService {
             .author(extracted.author())
             .library(library)
             .dueDate(dueDate)
-            // An owned item was never loaned; it starts as being read.
-            .status(library == null ? LoanStatus.READING : LoanStatus.LOANED)
+            // An owned item was never loaned; it sits on the shelf
+            // untouched until the user starts it.
+            .status(library == null ? LoanStatus.UNREAD : LoanStatus.LOANED)
             .build()));
+  }
+
+  /**
+   * Own items are never loaned or returned; anything not started becomes
+   * unread and finished progress is kept.
+   */
+  private LoanStatus toOwnStatus(LoanStatus status) {
+    return switch (status) {
+      case LOANED, UNREAD_RETURNED -> LoanStatus.UNREAD;
+      case READ_RETURNED -> LoanStatus.READ;
+      default -> status;
+    };
+  }
+
+  /**
+   * A borrowed item carries loan statuses; anything not started becomes
+   * loaned and finished progress is kept.
+   */
+  private LoanStatus toLoanedStatus(LoanStatus status) {
+    return switch (status) {
+      case UNREAD, UNREAD_RETURNED -> LoanStatus.LOANED;
+      case READ_RETURNED -> LoanStatus.READ;
+      default -> status;
+    };
   }
 
   private LoanItemResponse toResponse(LoanItem item) {

@@ -20,6 +20,7 @@ export const IMAGES = {
   bookFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVR42mP8/5/hPwMRgHFUIX0VAgAYyB3tBFoR2wAAAABJRU5ErkJggg==', // yellow
   unreadableFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8AARIQB46hC+ioEAGX8E/cKr6qsAAAAAElFTkSuQmCC', // red
   cdFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPj/n4EIwDiqkL4KAVIQE/f1/NxEAAAAAElFTkSuQmCC', // blue
+  dvdFront: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAEklEQVR42mNoYGjAgxhGpbEhAJC6ZAEYInNtAAAAAElFTkSuQmCC', // purple
   generatedCover: 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFElEQVR42mNk+A+ERADGUYX0VQgAXAYT9xTSUocAAAAASUVORK5CYII=', // green
 };
 
@@ -34,13 +35,19 @@ export function photo(name: string, base64: string) {
 
 export interface TestLoanItem {
   isbn?: string;
-  mediaType: 'BOOK' | 'CD';
+  mediaType: 'BOOK' | 'CD' | 'DVD';
   title: string;
   author?: string;
   library?: string;
   /** Omitted for the user's own items, which have no due date. */
   dueDate?: string;
-  status?: 'LOANED' | 'READING' | 'READ' | 'READ_RETURNED' | 'UNREAD_RETURNED';
+  status?:
+    | 'LOANED'
+    | 'UNREAD'
+    | 'READING'
+    | 'READ'
+    | 'READ_RETURNED'
+    | 'UNREAD_RETURNED';
 }
 
 export async function query(text: string, params?: any[]) {

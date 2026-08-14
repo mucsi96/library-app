@@ -123,11 +123,12 @@ test('imports the user\'s own book without a library or a due date', async ({
 
   const items = await getLoanItems();
   expect(items).toHaveLength(1);
+  // An own item was never opened yet, so it starts unread - not reading.
   expect(items[0]).toMatchObject({
     isbn: '9783440153598',
     library: null,
     due_date: null,
-    status: 'READING',
+    status: 'UNREAD',
   });
 
   // Own items only track reading progress - no loan statuses.
@@ -136,9 +137,11 @@ test('imports the user\'s own book without a library or a due date', async ({
     .click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('My own')).toBeVisible();
-  await expect(
-    dialog.getByRole('option', { name: 'Reading', exact: true })
-  ).toBeVisible();
+  for (const status of ['Unread', 'Reading', 'Read']) {
+    await expect(
+      dialog.getByRole('option', { name: status, exact: true })
+    ).toBeVisible();
+  }
   await expect(
     dialog.getByRole('option', { name: 'Loaned', exact: true })
   ).not.toBeVisible();
@@ -188,6 +191,28 @@ test('imports a CD labelled with an ISBN-10', async ({ page }) => {
   expect(readThumbnail('9784257178293')).toEqual(
     Buffer.from(IMAGES.generatedCover, 'base64')
   );
+});
+
+test('imports a DVD', async ({ page }) => {
+  await insertLibrary('Oerlikon');
+
+  await page.goto('/import');
+  await queueImport(page, IMAGES.dvdFront, 'Oerlikon');
+
+  await page.getByRole('link', { name: 'My loans' }).click();
+  const loans = loansTable(page);
+  await expect(loans.getByText('Die Sendung mit der Maus')).toBeVisible();
+  await expect(loans.getByRole('cell', { name: 'DVD', exact: true })).toBeVisible();
+
+  const items = await getLoanItems();
+  expect(items[0]).toMatchObject({
+    isbn: '9783161484100',
+    media_type: 'DVD',
+    title: 'Die Sendung mit der Maus',
+    author: 'Armin Maiwald',
+    library: 'Oerlikon',
+    status: 'LOANED',
+  });
 });
 
 test('queues several items back to back without waiting for the AI', async ({

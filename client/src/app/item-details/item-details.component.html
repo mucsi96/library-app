@@ -15,7 +15,7 @@
     }
     <div>
       <dt>Type</dt>
-      <dd>{{ item().mediaType === 'CD' ? 'CD' : 'Book' }}</dd>
+      <dd>{{ mediaTypeLabel() }}</dd>
     </div>
     @if (item().isbn) {
     <div>

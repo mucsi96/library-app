@@ -43,10 +43,11 @@
 
 Application for tracking books and CDs borrowed from libraries:
 - Loans list with due dates, overdue and due-soon reminders
-- Track each item's status (loaned, reading, read, read & returned,
-  returned unread - with listening/listened wording for CDs), each shown
-  as a colored tag, so finished items aren't borrowed again; the loans
-  list has quick filter chips for type, library and status
+- Track each item's status (loaned, unread, reading, read, read &
+  returned, returned unread - with listening/listened wording for CDs and
+  watching/watched wording for DVDs), each shown as a colored tag, so
+  finished items aren't borrowed again; the loans list has quick filter
+  chips for type, library and status
 - A selection mode on the loans list ticks individual rows or every row
   matching the quick filters at once, and a sticky bottom bar sets one new
   due date for the whole selection — the stack renewed at the counter in
@@ -56,8 +57,8 @@ Application for tracking books and CDs borrowed from libraries:
 - A detail modal (large cover, ISBN, status chips) opened by tapping an
   item changes the status, and moves the item to another library or to
   "My own": moving to own drops the due date and keeps only reading
-  progress (loaned becomes reading), picking a library for an own item
-  starts a fresh loan period
+  progress (loaned becomes unread), picking a library for an own item
+  starts a fresh loan period (unread becomes loaned)
 - Import an item by picking its source explicitly — a library from a
   predefined list managed on the settings page (slug ids derived from the
   name), or "My own" for items the user owns — then photographing its
@@ -66,8 +67,9 @@ Application for tracking books and CDs borrowed from libraries:
   library is never AI-guessed), and the ISBN is validated (ISBN-10
   converted, 978/979 prefix and check digit) server-side
 - Own items have no due date, show "My own" instead of a library (with a
-  matching filter chip), and only track reading progress (reading/read;
-  listening/listened for CDs), starting as reading
+  matching filter chip), and only track reading progress
+  (unread/reading/read; unlistened/listening/listened for CDs,
+  unwatched/watching/watched for DVDs), starting as unread
 - Importing is asynchronous: the upload stages both photos and returns
   202 immediately, so the import page clears itself and the next item can
   be captured right away (batch capture at the library counter). A paced
@@ -174,8 +176,8 @@ cd test && npx playwright test --ui  # Interactive test runner
   ISBN-waiting import and delete its photos (authenticated)
 - `GET /api/thumbnails/{isbn13}` - Cover thumbnail (JPEG, immutable cache,
   authenticated)
-- `PUT /api/items/{id}/status` - Set an item's status (LOANED, READING,
-  READ, READ_RETURNED or UNREAD_RETURNED) (authenticated)
+- `PUT /api/items/{id}/status` - Set an item's status (LOANED, UNREAD,
+  READING, READ, READ_RETURNED or UNREAD_RETURNED) (authenticated)
 - `PUT /api/items/{id}/library` - Move an item to a library from the
   predefined list (by slug id) or, with a null library, to "My own";
   moving to own clears the due date and maps the status to reading
@@ -188,9 +190,10 @@ cd test && npx playwright test --ui  # Interactive test runner
 ## Data Model
 
 - **loan_items** (schema `library`) - One row per item: ISBN-13 (unique,
-  import upsert key), media type (BOOK or CD), title, author, library
+  import upsert key), media type (BOOK, CD or DVD), title, author, library
   branch (null for own items), due date (null for own items), and the
-  status (LOANED, READING, READ, READ_RETURNED or UNREAD_RETURNED)
+  status (LOANED, UNREAD, READING, READ, READ_RETURNED or
+  UNREAD_RETURNED)
 - **libraries** (schema `library`) - The predefined list managed on the
   settings page: `id` (slug of the name) and unique `name`
 - **import_jobs** (schema `library`) - One row per queued import: public

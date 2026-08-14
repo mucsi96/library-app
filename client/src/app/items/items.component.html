@@ -18,6 +18,7 @@
   >
     <mat-chip-option value="BOOK">Book</mat-chip-option>
     <mat-chip-option value="CD">CD</mat-chip-option>
+    <mat-chip-option value="DVD">DVD</mat-chip-option>
   </mat-chip-listbox>
   <mat-chip-listbox
     aria-label="Filter by library"
@@ -104,7 +105,7 @@
         <app-cover [item]="item" />
       </td>
       <td role="cell" class="type-cell">
-        {{ item.mediaType === 'CD' ? 'CD' : 'Book' }}
+        {{ mediaTypeLabel(item) }}
       </td>
       <td role="cell" class="title-cell">
         <button

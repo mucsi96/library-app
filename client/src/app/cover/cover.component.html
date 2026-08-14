@@ -9,8 +9,6 @@
 />
 } @else {
 <div class="cover cover-placeholder" [class.cover-large]="size() === 'large'">
-  <mat-icon aria-hidden="true">{{
-    item().mediaType === 'CD' ? 'album' : 'menu_book'
-  }}</mat-icon>
+  <mat-icon aria-hidden="true">{{ placeholderIcon() }}</mat-icon>
 </div>
 }

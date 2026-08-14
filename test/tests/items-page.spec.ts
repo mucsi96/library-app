@@ -160,6 +160,56 @@ test('status filter uses listening wording when only CDs have the status', async
   await expect(page.getByText('Finished CD')).toBeVisible();
 });
 
+test('uses watching wording for DVDs', async ({ page }) => {
+  await insertLoanItem({
+    mediaType: 'DVD',
+    title: 'Finished DVD',
+    library: 'Sihlcity',
+    dueDate: daysFromToday(12),
+    status: 'READ',
+  });
+
+  await page.goto('/');
+
+  await expect(
+    page.getByRole('cell', { name: 'DVD', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Change status of "Finished DVD"' })
+  ).toHaveText('Watched');
+
+  // DVDs have their own type filter chip and status wording.
+  await page.getByRole('option', { name: 'DVD', exact: true }).click();
+  await page.getByRole('option', { name: 'Watched', exact: true }).click();
+  await expect(page.getByText('Finished DVD')).toBeVisible();
+});
+
+test('shows an own unwatched DVD with watching statuses', async ({ page }) => {
+  await insertLoanItem({
+    mediaType: 'DVD',
+    title: 'My own DVD',
+    status: 'UNREAD',
+  });
+
+  await page.goto('/');
+
+  const statusChip = page.getByRole('button', {
+    name: 'Change status of "My own DVD"',
+  });
+  await expect(statusChip).toHaveText('Unwatched');
+  await statusChip.click();
+
+  const dialog = page.getByRole('dialog');
+  for (const status of ['Unwatched', 'Watching', 'Watched']) {
+    await expect(
+      dialog.getByRole('option', { name: status, exact: true })
+    ).toBeVisible();
+  }
+  await expect(
+    dialog.getByRole('option', { name: 'Loaned', exact: true })
+  ).not.toBeVisible();
+});
+
 test('lists own items without a due date and filters them', async ({
   page,
 }) => {
@@ -491,7 +541,11 @@ test('moves an item to my own and back from the detail modal', async ({
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('option', { name: 'My own' }).click();
 
-  // Own items have no due date and only track reading progress.
+  // Own items have no due date and only track reading progress; a loaned
+  // item was never started, so on the own shelf it is unread.
+  await expect(
+    dialog.getByRole('option', { name: 'Unread', exact: true })
+  ).toBeVisible();
   await expect(
     dialog.getByRole('option', { name: 'Reading', exact: true })
   ).toBeVisible();
@@ -502,10 +556,11 @@ test('moves an item to my own and back from the detail modal', async ({
 
   let items = await getLoanItems();
   expect(items[0].library).toBeNull();
-  expect(items[0].status).toBe('READING');
+  expect(items[0].status).toBe('UNREAD');
   expect(items[0].due_date).toBeNull();
 
-  // Picking a library again turns it back into a loan with a due date.
+  // Picking a library again turns it back into a loan with a due date, and
+  // the untouched item is loaned - not unread - again.
   await dialog.getByRole('option', { name: 'Sihlcity' }).click();
   await expect(dialog.getByText('Due in 28 days')).toBeVisible();
   await dialog.getByRole('button', { name: 'Close' }).click();
@@ -513,6 +568,7 @@ test('moves an item to my own and back from the detail modal', async ({
   items = await getLoanItems();
   expect(items[0].library).toBe('Sihlcity');
   expect(items[0].due_date).not.toBeNull();
+  expect(items[0].status).toBe('LOANED');
 });
 
 test('changes a CD status to listened and back to loaned', async ({ page }) => {

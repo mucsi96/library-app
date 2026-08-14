@@ -11,6 +11,7 @@ import { dueLabel } from '../utils/due-label';
 import {
   LOAN_STATUSES,
   OWN_STATUSES,
+  mediaTypeLabel,
   statusLabel,
 } from '../utils/status-label';
 
@@ -77,6 +78,10 @@ export class ItemDetailsComponent {
 
   statusLabel(status: LoanStatus): string {
     return statusLabel(status, this.item().mediaType);
+  }
+
+  mediaTypeLabel(): string {
+    return mediaTypeLabel(this.item().mediaType);
   }
 
   dueLabel(): string {
