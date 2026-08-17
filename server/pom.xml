@@ -93,7 +93,7 @@
     <dependency>
       <groupId>com.openai</groupId>
       <artifactId>openai-java-client-okhttp</artifactId>
-      <version>4.43.0</version>
+      <version>4.51.0</version>
     </dependency>
     <!-- Required by Spring AI's BeanOutputConverter (structured output) -->
     <dependency>
@@ -117,7 +117,7 @@
       <dependency>
         <groupId>com.azure.spring</groupId>
         <artifactId>spring-cloud-azure-dependencies</artifactId>
-        <version>7.3.0</version>
+        <version>7.4.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
