@@ -250,6 +250,15 @@
                  in Base64Variant, which pulls in its nested
                  PaddingReadBehaviour), hence the whole package. -->
             <buildArg>--initialize-at-build-time=com.fasterxml.jackson.core</buildArg>
+            <!-- The OpenAI SDK's recorded reflect-config registers every model
+                 of every API it has, which pulls tens of thousands of types
+                 nothing here calls into the image and runs the builder out of
+                 memory. OpenAiNativeHints registers the packages actually
+                 used instead. The SDK's other metadata (proxies, resources,
+                 serialization, JNI) stays. -->
+            <buildArg>--exclude-config</buildArg>
+            <buildArg>.*openai-java-core.*\.jar</buildArg>
+            <buildArg>META-INF/native-image/reflect-config\.json</buildArg>
             <!-- See native-image.security for why the builder has to ignore
                  jar signatures. -->
             <buildArg>-J-Djava.security.properties=${project.basedir}/native-image.security</buildArg>

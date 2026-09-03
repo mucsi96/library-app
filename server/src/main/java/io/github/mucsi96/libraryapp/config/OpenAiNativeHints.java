@@ -37,23 +37,24 @@ import org.springframework.core.type.filter.TypeFilter;
  * reflection internals rather than anything that is missing.
  *
  * The SDK does ship a {@code META-INF/native-image/reflect-config.json}
- * (4.43.0), agent-recorded from the SDK's own test-suite: it lists the
- * getters and {@code <init>}s those tests touched, but for many classes only
- * a query on the constructors, which is not enough to invoke one. Whole
- * packages are registered here rather than the classes that fail today, for
- * the reason given in {@link AzureNativeHints}: the next model the SDK reaches
- * for fails the same way, pointing nowhere near its cause. The scan is limited
- * to what this application can reach - chat completions, images, the shared
- * core and the error models, plus the top-level models (response formats, the
- * model enums) those refer to. The other model packages (responses, beta,
- * realtime, evals, ...) are four fifths of the SDK's 25k classes, and nothing
- * here calls those APIs.
- *
- * Only constructors and fields are registered, deliberately not every method:
- * the SDK's own config carries the accessors Jackson serializes with, and
- * registering all methods of these Kotlin classes (each with a builder) for
- * invocation adds tens of thousands of compiled methods, which ran the
- * native-image builder out of memory on a 16GB machine.
+ * (4.43.0), agent-recorded from its own test-suite, and the build excludes it
+ * on purpose (see {@code --exclude-config} in pom.xml). It registers twelve
+ * thousand types across every API the SDK has - beta, responses, realtime,
+ * admin, evals - with their fields, and each field drags its type along, so
+ * the reachable universe grows by tens of thousands of types that nothing
+ * here can call, and the native-image builder runs out of memory before it
+ * has laid the image out. It is also incomplete for what is used: for many
+ * classes it only records a query on the constructors, which is not enough to
+ * invoke one. Whole packages are registered here instead, for the reason
+ * given in {@link AzureNativeHints}: the next model the SDK reaches for fails
+ * the same way, pointing nowhere near its cause. The scan is limited to what
+ * this application can reach - chat completions and the completion usage
+ * they carry, images, the shared core and the error models, plus the
+ * top-level models (response formats, the model enums) those refer to. The
+ * other model packages are four fifths of the SDK's 25k classes, and nothing
+ * here calls those APIs; the remaining Spring AI OpenAI auto-configurations
+ * (audio, embeddings, moderation, images) are switched off in
+ * application.yml so they cannot reach for them either.
  *
  * The scan reads bytecode rather than loading classes, and skips anonymous and
  * lambda classes. Both matter: Spring AI's own
@@ -88,6 +89,7 @@ public class OpenAiNativeHints {
 
     private static final List<Scan> SCANS = List.of(
         Scan.wholePackage("com.openai.models.chat"),
+        Scan.wholePackage("com.openai.models.completions"),
         Scan.wholePackage("com.openai.models.images"),
         Scan.wholePackage("com.openai.core"),
         Scan.wholePackage("com.openai.errors"),
@@ -118,6 +120,7 @@ public class OpenAiNativeHints {
           }
           hints.reflection().registerTypeIfPresent(classLoader, name,
               MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+              MemberCategory.INVOKE_DECLARED_METHODS,
               MemberCategory.ACCESS_DECLARED_FIELDS);
         }
       }

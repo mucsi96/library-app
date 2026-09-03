@@ -315,15 +315,18 @@ Build-time details that live in `server/pom.xml` and are easy to trip over:
   reads constructors through `jackson-module-kotlin`, which in a native image
   without reflection metadata fails at request time with
   `KotlinReflectionInternalError: Could not compute caller for function`. The
-  SDK ships a recorded `reflect-config.json`, but only for the members its own
-  tests touched. `OpenAiNativeHints` registers the constructors and fields of
-  the model packages this application reaches (chat completions, images, core,
-  errors, the top-level models) wholesale, so the next SDK model Spring AI
-  reaches for cannot fail the same way. Methods are left to the SDK's config
-  on purpose: registering every method of those Kotlin classes for invocation
-  ran the native-image builder out of memory (it has roughly 12GB on a GitHub
-  runner), so watch the builder's memory line when widening any scan-based
-  hint.
+  SDK ships a recorded `reflect-config.json`, but it registers every model of
+  every API the SDK has (twelve thousand types, each field dragging its type
+  along), which grows the image by tens of thousands of types nothing here
+  calls and runs the native-image builder out of memory - it has roughly 12GB
+  on a GitHub runner. The build therefore excludes that one file
+  (`--exclude-config` in `server/pom.xml`; the SDK's proxy, resource,
+  serialization and JNI metadata stay), and `OpenAiNativeHints` registers the
+  model packages this application reaches (chat completions, completion usage,
+  images, core, errors, the top-level models) wholesale, so the next SDK model
+  Spring AI reaches for cannot fail the same way. Reaching for another SDK API
+  means adding its package there, and watching the builder's reachable-types
+  line when widening any scan-based hint.
 - `ItemExtractionService` binds the model's answer into `ExtractedItem` via
   Spring AI's `BeanOutputConverter`, which reads the record reflectively twice:
   victools walks its components to generate the JSON schema sent with the
