@@ -331,6 +331,23 @@ Build-time details that live in `server/pom.xml` and are easy to trip over:
   way. Reaching for another SDK API means adding its package to
   `USED_MODEL_PACKAGES` there, and watching the builder's reachable-types line
   when widening any scan-based hint.
+- The reachability metadata the GraalVM repository ships for liquibase-core
+  was recorded with the tracing agent, so every entry carries a `typeReached`
+  condition naming whichever class was on the stack during the recording, and
+  only becomes active once that class is reached at run time. The getters a
+  changeset checksum needs are recorded under `UpdateVisitor` - the path a
+  first migration takes, and so the only path the e2e pod's empty database
+  ever exercised. Against a database that already carries the changelog,
+  `ValidatingVisitor` recomputes every applied changeset's checksum before
+  any update visitor exists, and the first such getter dies with
+  `MissingReflectionRegistrationError` - which is what every production
+  redeploy does, and what no fresh database shows. `LiquibaseNativeHints`
+  registers the whole serializable model (every `LiquibaseSerializable`:
+  changes, preconditions, column and constraint configs) unconditionally, and
+  `scripts/pod_up.sh` restarts the server once after the pod is up so the
+  e2e run also starts against a migrated database. Keep that restart: it is
+  the only check of that path before deploy. This also does not reproduce on
+  the AOT-on-JVM run below.
 - `ItemExtractionService` binds the model's answer into `ExtractedItem` via
   Spring AI's `BeanOutputConverter`, which reads the record reflectively twice:
   victools walks its components to generate the JSON schema sent with the
