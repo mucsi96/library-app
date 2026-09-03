@@ -2,6 +2,7 @@ package io.github.mucsi96.libraryapp.service;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.content.Media;
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
@@ -9,7 +10,13 @@ import org.springframework.util.MimeTypeUtils;
 import io.github.mucsi96.libraryapp.model.ExtractedItem;
 import io.github.mucsi96.libraryapp.model.PhotoData;
 
+// The structured-output converter behind entity(ExtractedItem.class) reads
+// the record reflectively twice: victools walks its components to generate
+// the JSON schema sent with the prompt, and Jackson binds the reply through
+// the canonical constructor. Neither is visible to the framework's own AOT
+// processing, so the native image needs the members registered by hand.
 @Service
+@RegisterReflectionForBinding(ExtractedItem.class)
 public class ItemExtractionService {
 
   static final String SYSTEM_PROMPT = """

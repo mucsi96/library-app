@@ -52,6 +52,18 @@ spring:
           issuer-uri: https://login.microsoftonline.com/${tenant-id:}/v2.0
           audiences: ${api-client-id:}
   ai:
+    # Only the chat model is used through Spring AI (the cover thumbnail goes
+    # through the OpenAI SDK directly), so the other OpenAI model
+    # auto-configurations - each wiring up its own client - are switched off.
+    # These are conditions, so they are decided at AOT time and baked into the
+    # native image, which they also keep smaller.
+    model:
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
     openai:
       api-key: ${openai-api-key}
       # Import jobs own retrying - they can back off across minutes and

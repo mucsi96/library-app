@@ -27,7 +27,7 @@ again. Based on the patterns from
 - **CI/CD Pipeline** - GitHub Actions with E2E testing and image publishing
 - **Deployment** - Docker multi-stage builds with Traefik reverse proxy
 - **Client** - Angular with Material UI dark theme
-- **Server** - Spring Boot with Java 21
+- **Server** - Spring Boot 4 with Java 21, compiled ahead of time into a GraalVM native image
 - **Authentication** - Azure AD (MSAL) with conditional mock auth for testing
 - **Configuration** - Azure Key Vault + Spring profiles (prod/local/test)
 - **Database** - PostgreSQL with Spring Data JPA
@@ -35,6 +35,24 @@ again. Based on the patterns from
   gpt-image-2 via the official OpenAI Java SDK, with a mock OpenAI server
   for tests
 - **Testing** - Playwright E2E tests
+
+## One image per Spring profile
+
+The server is shipped as a GraalVM native executable. Bean definitions are
+resolved during ahead-of-time processing at build time, so the active Spring
+profile is baked into the executable and cannot be chosen at startup any more.
+The server image is therefore built once per profile, via the `SPRING_PROFILE`
+build argument:
+
+```bash
+podman build --build-arg SPRING_PROFILE=test -t library-app-server:test server   # e2e pod
+podman build --build-arg SPRING_PROFILE=prod -t library-app-server:prod server   # published image
+```
+
+`SPRING_PROFILES_ACTIVE` is not read at runtime; the pipeline builds the test
+image for the e2e job and the prod image when publishing to Docker Hub. Running
+the server on a JVM for local development is unaffected - `mvn spring-boot:run
+-Dspring-boot.run.profiles=local` still selects the profile the usual way.
 
 ## Port Mapping
 
