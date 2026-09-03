@@ -321,12 +321,16 @@ Build-time details that live in `server/pom.xml` and are easy to trip over:
   calls and runs the native-image builder out of memory - it has roughly 12GB
   on a GitHub runner. The build therefore excludes that one file
   (`--exclude-config` in `server/pom.xml`; the SDK's proxy, resource,
-  serialization and JNI metadata stay), and `OpenAiNativeHints` registers the
-  model packages this application reaches (chat completions, completion usage,
-  images, core, errors, the top-level models) wholesale, so the next SDK model
-  Spring AI reaches for cannot fail the same way. Reaching for another SDK API
-  means adding its package there, and watching the builder's reachable-types
-  line when widening any scan-based hint.
+  serialization and JNI metadata stay), and `OpenAiNativeHints` replays it
+  minus the unused model packages - what it records for Jackson's serializers
+  and Kotlin's reflection is still needed, and dropping it fails the first AI
+  call with `NullSerializer has no default (no arg) constructor`. On top of
+  that it registers the model packages this application reaches (chat
+  completions, completion usage, images, core, errors, the top-level models)
+  wholesale, so the next SDK model Spring AI reaches for cannot fail the same
+  way. Reaching for another SDK API means adding its package to
+  `USED_MODEL_PACKAGES` there, and watching the builder's reachable-types line
+  when widening any scan-based hint.
 - `ItemExtractionService` binds the model's answer into `ExtractedItem` via
   Spring AI's `BeanOutputConverter`, which reads the record reflectively twice:
   victools walks its components to generate the JSON schema sent with the

@@ -253,8 +253,9 @@
             <!-- The OpenAI SDK's recorded reflect-config registers every model
                  of every API it has, which pulls tens of thousands of types
                  nothing here calls into the image and runs the builder out of
-                 memory. OpenAiNativeHints registers the packages actually
-                 used instead. The SDK's other metadata (proxies, resources,
+                 memory. OpenAiNativeHints replays that file minus the unused
+                 model packages, and registers the packages actually used in
+                 full. The SDK's other metadata (proxies, resources,
                  serialization, JNI) stays. -->
             <buildArg>--exclude-config</buildArg>
             <buildArg>.*openai-java-core.*\.jar</buildArg>
