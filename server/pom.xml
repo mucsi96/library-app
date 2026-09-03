@@ -94,6 +94,17 @@
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-model-openai</artifactId>
+      <!-- The starter pulls in WebClient - and with it WebFlux, reactor-netty
+           and Netty - although the OpenAI module talks to the API through the
+           official SDK (OkHttp) and never references WebClient. On a JVM that
+           is dead weight; in the native image it is a large slice of the
+           reachable code and of the builder's memory. -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-webclient</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.openai</groupId>
