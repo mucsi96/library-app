@@ -38,13 +38,8 @@ dump_logs() {
   done
 }
 
-echo "Waiting for all containers to become healthy..."
-CONTAINERS=$(podman pod inspect "$POD_NAME" --format '{{range .Containers}}{{.Name}} {{end}}')
-
-for container in $CONTAINERS; do
-  if echo "$container" | grep -q "infra"; then
-    continue
-  fi
+wait_healthy() {
+  local container=$1
   echo "  Waiting for $container..."
   ELAPSED=0
   # Run each container's healthcheck on demand instead of reading
@@ -67,6 +62,27 @@ for container in $CONTAINERS; do
     ELAPSED=$((ELAPSED + 2))
   done
   echo "  $container is healthy"
+}
+
+echo "Waiting for all containers to become healthy..."
+CONTAINERS=$(podman pod inspect "$POD_NAME" --format '{{range .Containers}}{{.Name}} {{end}}')
+
+for container in $CONTAINERS; do
+  if echo "$container" | grep -q "infra"; then
+    continue
+  fi
+  wait_healthy "$container"
 done
+
+# The server has now migrated an empty database. A deployment to production
+# starts against a database that already carries the changelog, and that is a
+# different code path in the native executable: Liquibase recomputes the
+# checksum of every applied changeset before anything runs, reaching
+# reflection that a first migration never touches (see LiquibaseNativeHints).
+# Restart the server once so the pod exercises that path too - the executable
+# is serving again within a second, so this costs nothing noticeable.
+echo "Restarting the server against the migrated database..."
+podman restart "$POD_NAME-server" > /dev/null
+wait_healthy "$POD_NAME-server"
 
 echo "All services are ready!"
