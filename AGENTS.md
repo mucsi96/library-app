@@ -316,10 +316,14 @@ Build-time details that live in `server/pom.xml` and are easy to trip over:
   without reflection metadata fails at request time with
   `KotlinReflectionInternalError: Could not compute caller for function`. The
   SDK ships a recorded `reflect-config.json`, but only for the members its own
-  tests touched. `OpenAiNativeHints` registers the model packages this
-  application reaches (chat completions, images, core, errors, the top-level
-  models) wholesale, so the next SDK model Spring AI reaches for cannot fail
-  the same way.
+  tests touched. `OpenAiNativeHints` registers the constructors and fields of
+  the model packages this application reaches (chat completions, images, core,
+  errors, the top-level models) wholesale, so the next SDK model Spring AI
+  reaches for cannot fail the same way. Methods are left to the SDK's config
+  on purpose: registering every method of those Kotlin classes for invocation
+  ran the native-image builder out of memory (it has roughly 12GB on a GitHub
+  runner), so watch the builder's memory line when widening any scan-based
+  hint.
 - `ItemExtractionService` binds the model's answer into `ExtractedItem` via
   Spring AI's `BeanOutputConverter`, which reads the record reflectively twice:
   victools walks its components to generate the JSON schema sent with the

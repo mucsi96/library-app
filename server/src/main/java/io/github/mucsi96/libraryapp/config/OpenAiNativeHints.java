@@ -37,18 +37,23 @@ import org.springframework.core.type.filter.TypeFilter;
  * reflection internals rather than anything that is missing.
  *
  * The SDK does ship a {@code META-INF/native-image/reflect-config.json}
- * (4.43.0), but it is agent-recorded from the SDK's own test-suite, and lists
- * exactly the members those tests touched: the params classes this
- * application sends ({@code ImageEditParams}, {@code ChatCompletionCreateParams})
- * are in it with a single method each. Whole packages are registered here
- * rather than the classes that fail today, for the reason given in
- * {@link AzureNativeHints}: the next model the SDK reaches for fails the same
- * way, pointing nowhere near its cause. The scan is limited to what this
- * application can reach - chat completions, images, the shared core and the
- * error models, plus the top-level models (response formats, the model
- * enums) those refer to. The other model packages (responses, beta,
+ * (4.43.0), agent-recorded from the SDK's own test-suite: it lists the
+ * getters and {@code <init>}s those tests touched, but for many classes only
+ * a query on the constructors, which is not enough to invoke one. Whole
+ * packages are registered here rather than the classes that fail today, for
+ * the reason given in {@link AzureNativeHints}: the next model the SDK reaches
+ * for fails the same way, pointing nowhere near its cause. The scan is limited
+ * to what this application can reach - chat completions, images, the shared
+ * core and the error models, plus the top-level models (response formats, the
+ * model enums) those refer to. The other model packages (responses, beta,
  * realtime, evals, ...) are four fifths of the SDK's 25k classes, and nothing
  * here calls those APIs.
+ *
+ * Only constructors and fields are registered, deliberately not every method:
+ * the SDK's own config carries the accessors Jackson serializes with, and
+ * registering all methods of these Kotlin classes (each with a builder) for
+ * invocation adds tens of thousands of compiled methods, which ran the
+ * native-image builder out of memory on a 16GB machine.
  *
  * The scan reads bytecode rather than loading classes, and skips anonymous and
  * lambda classes. Both matter: Spring AI's own
@@ -113,7 +118,6 @@ public class OpenAiNativeHints {
           }
           hints.reflection().registerTypeIfPresent(classLoader, name,
               MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-              MemberCategory.INVOKE_DECLARED_METHODS,
               MemberCategory.ACCESS_DECLARED_FIELDS);
         }
       }
