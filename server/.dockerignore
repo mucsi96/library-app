@@ -1,0 +1,5 @@
+# The native build produces a multi-GB target directory; keep it out of the
+# build context so local podman/docker builds stay fast. The local dev
+# storage (thumbnails, staged photos) has no business in the image either.
+target
+storage
