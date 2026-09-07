@@ -63,9 +63,9 @@ spec:
         - name: PREFERRED_USERNAME
           value: test-user@example.com
         - name: ROLES
-          value: LibraryUser
+          value: readItems,writeItems
         - name: SCP
-          value: readItems writeItems
+          value: api-access
         - name: AUD
           value: mock-api-client-id
       livenessProbe:

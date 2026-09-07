@@ -25,21 +25,21 @@ public class LibraryController {
   private final LibraryService libraryService;
 
   @GetMapping("/libraries")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_readItems')")
+  @PreAuthorize("hasAuthority('APPROLE_readItems')")
   public List<LibraryResponse> getLibraries() {
     return libraryService.getLibraries();
   }
 
   @PostMapping("/libraries")
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public LibraryResponse createLibrary(@Valid @RequestBody CreateLibraryRequest request) {
     return libraryService.create(request.name());
   }
 
   @DeleteMapping("/libraries/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public void deleteLibrary(@PathVariable String id) {
     libraryService.delete(id);
   }
