@@ -40,9 +40,8 @@ echo "Deploying server: $DOCKERHUB_USERNAME/library-app-server:$serverLatestTag 
 # code cache and no JIT-compiled code to hold: it idles far below what the
 # 512Mi request assumed for the JRE image, hence the smaller request. The
 # request is what the scheduler reserves around the clock, so it is sized for
-# idle. It is an estimate, not a measurement - replace it with the resident
-# figure metrics-server reports once this image has run in production for a
-# while (the skeleton app measured ~58Mi for a smaller service).
+# idle. Over 36h in production RSS averaged 100Mi and peaked at 136Mi; the
+# working set peaked at 216Mi.
 #
 # The limit is the opposite question and stays where it is: it has to cover the
 # idle footprint plus the 512Mi heap the image is capped at, which an import
@@ -80,4 +79,6 @@ helm upgrade $CLIENT_RELEASE_NAME mucsi96/client-app \
     --set image=$DOCKERHUB_USERNAME/library-app-client:$clientLatestTag \
     --set host=$HOSTNAME \
     --set entryPoint=web \
+    --set resources.requests.memory=8Mi \
+    --set resources.limits.memory=32Mi \
     --wait
