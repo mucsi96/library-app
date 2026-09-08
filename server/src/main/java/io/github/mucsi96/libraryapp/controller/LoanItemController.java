@@ -38,7 +38,7 @@ public class LoanItemController {
   private final ImportJobService importJobService;
 
   @GetMapping("/items")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_readItems')")
+  @PreAuthorize("hasAuthority('APPROLE_readItems')")
   public List<LoanItemResponse> getItems() {
     return loanItemService.getItems();
   }
@@ -52,7 +52,7 @@ public class LoanItemController {
    */
   @PostMapping("/items/import")
   @ResponseStatus(HttpStatus.ACCEPTED)
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public ImportJobResponse importItem(
       @RequestParam("front") MultipartFile front,
       @RequestParam("back") MultipartFile back,
@@ -65,25 +65,25 @@ public class LoanItemController {
    * stack renewed at the counter is updated in one go.
    */
   @PutMapping("/items/due-date")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public List<LoanItemResponse> setDueDate(@Valid @RequestBody UpdateDueDateRequest request) {
     return loanItemService.setDueDate(request.ids(), request.dueDate());
   }
 
   @PutMapping("/items/{id}/status")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public LoanItemResponse setStatus(@PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
     return loanItemService.setStatus(id, request.status());
   }
 
   @PutMapping("/items/{id}/library")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public LoanItemResponse setLibrary(@PathVariable Long id, @RequestBody UpdateLibraryRequest request) {
     return loanItemService.setLibrary(id, request.library());
   }
 
   @GetMapping(value = "/thumbnails/{isbn:\\d{13}}", produces = MediaType.IMAGE_JPEG_VALUE)
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_readItems')")
+  @PreAuthorize("hasAuthority('APPROLE_readItems')")
   public ResponseEntity<byte[]> getThumbnail(@PathVariable String isbn) {
     if (!thumbnailService.hasThumbnail(isbn)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No thumbnail for ISBN: " + isbn);

@@ -31,7 +31,7 @@ public class ImportJobController {
   private final ImportJobService importJobService;
 
   @GetMapping("/import-jobs")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_readItems')")
+  @PreAuthorize("hasAuthority('APPROLE_readItems')")
   public List<ImportJobResponse> getImportJobs() {
     return importJobService.getVisibleJobs();
   }
@@ -42,7 +42,7 @@ public class ImportJobController {
    * completes.
    */
   @GetMapping("/import-jobs/{reference}/photo")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_readItems')")
+  @PreAuthorize("hasAuthority('APPROLE_readItems')")
   public ResponseEntity<byte[]> getImportPhoto(@PathVariable UUID reference) {
     PhotoData photo = importJobService.getFrontPhoto(reference);
 
@@ -53,14 +53,14 @@ public class ImportJobController {
   }
 
   @PostMapping("/import-jobs/{reference}/retry")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public ImportJobResponse retryImport(@PathVariable UUID reference) {
     return importJobService.retry(reference);
   }
 
   /** The manually typed ISBN for an import whose photos had no readable one. */
   @PostMapping("/import-jobs/{reference}/isbn")
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public ImportJobResponse submitIsbn(
       @PathVariable UUID reference,
       @Valid @RequestBody SubmitIsbnRequest request) {
@@ -69,7 +69,7 @@ public class ImportJobController {
 
   @DeleteMapping("/import-jobs/{reference}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  @PreAuthorize("hasAuthority('APPROLE_LibraryUser') and hasAuthority('SCOPE_writeItems')")
+  @PreAuthorize("hasAuthority('APPROLE_writeItems')")
   public void dismissImport(@PathVariable UUID reference) {
     importJobService.dismiss(reference);
   }

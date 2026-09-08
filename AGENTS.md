@@ -217,8 +217,8 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 ## Authorization
 
-- App role `LibraryUser` plus scopes `readItems` (queries) and `writeItems`
-  (import, completion) - enforced via @PreAuthorize on the controllers
+- App roles `readItems` (queries) and `writeItems` (mutations) are enforced via
+  `@PreAuthorize`; the `api-access` scope is required for all protected routes
 
 ## Configuration Patterns
 
