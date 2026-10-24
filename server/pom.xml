@@ -109,7 +109,7 @@
     <dependency>
       <groupId>com.openai</groupId>
       <artifactId>openai-java-client-okhttp</artifactId>
-      <version>4.76.0</version>
+      <version>4.86.0</version>
     </dependency>
     <!-- Required by Spring AI's BeanOutputConverter (structured output) -->
     <dependency>
