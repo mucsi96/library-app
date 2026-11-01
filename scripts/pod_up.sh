@@ -13,9 +13,14 @@ else
   # processing, so the pod image has to be built with the test profile.
   podman build --build-arg SPRING_PROFILE=test \
     -t localhost/library-app-server:test "$PROJECT_DIR/server" &
-  podman build -t localhost/library-app-client:test "$PROJECT_DIR/client" &
+  server_build=$!
+  (cd "$PROJECT_DIR/client" && npm ci && npm run build) &
+  client_build=$!
   podman build -t localhost/library-app-mock-openai:test "$PROJECT_DIR/mock_openai_server" &
-  wait
+  mock_build=$!
+  for build in "$server_build" "$client_build" "$mock_build"; do
+    wait "$build"
+  done
 fi
 
 echo "Cleaning up existing pod..."
