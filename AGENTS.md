@@ -119,7 +119,7 @@ Application for tracking books and CDs borrowed from libraries:
 
 ## Architecture
 
-- **client/** - Angular SPA with Material UI, MSAL authentication
+- **client/** - Angular SPA with Material UI, gateway cookie authentication
 - **server/** - Spring Boot REST API with PostgreSQL
 - **mock_openai_server/** - Express mock of the OpenAI API for E2E tests
 - **test/** - Playwright E2E tests
@@ -132,7 +132,7 @@ Application for tracking books and CDs borrowed from libraries:
 - Spring AI (GPT-5 vision extraction) + OpenAI Java SDK (gpt-image-2 edits)
 - Angular 22
 - PostgreSQL 17
-- Azure AD (MSAL) authentication
+- Entra/oauth2-proxy gateway sessions; API JWT authorization
 - Azure Key Vault for secrets
 - Traefik reverse proxy
 - Docker multi-stage builds
@@ -171,7 +171,7 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 ## API Routes
 
-- `GET /api/environment` - Client configuration (public)
+- `/oauth2/*` - Gateway-owned login, callback and userinfo; tokens remain server-side
 - `GET /api/items` - List loan items sorted by due date (authenticated)
 - `GET /api/libraries` - The predefined library list, sorted by name
   (authenticated)
@@ -235,13 +235,18 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 - App roles `readItems` (queries) and `writeItems` (mutations) are enforced via
   `@PreAuthorize`; the `api-access` scope is required for all protected routes
+- Gateway sessions authenticate documents before Angular starts; the gateway
+  strips browser credentials and supplies the API bearer token. Spring still
+  validates issuer, audience, scope and roles. Mutations require the
+  `__Host-XSRF-TOKEN` cookie and Angular's matching `X-XSRF-TOKEN` header, even
+  with bearer authentication. Keep the explicit CsrfFilter matcher override.
 
 ## Configuration Patterns
 
 ### Spring Profiles
 - **prod** - Production with Azure Key Vault and AAD
 - **local** - Local development with Podman DB
-- **test** - Testing with disabled auth
+- **test** - Mock OIDC issuer with real JWT and CSRF validation
 
 ## Native image and the baked-in Spring profile
 
@@ -420,7 +425,7 @@ looks for over the whole class hierarchy - see
 
 ### Release and image publishing
 
-`publish-server` and `publish-client` publish numbered GHCR images only when
+`publish-server` publishes numbered GHCR images only when
 `get_next_version.outputs.hasNextVersion == 'true'`, tagging them with
 `get_next_version.outputs.version`. Authentication uses `GITHUB_TOKEN` with
 job-scoped `packages: write`. Release tags use `target_commitish: ${{ github.sha }}`.
@@ -429,11 +434,21 @@ release when unchanged; `hasNextVersion` alone controls publication. Forward its
 version output directly to deployment without a consumer-side tag lookup.
 The workflow serializes publication and rollout; require numbered GHCR tags or
 digests.
-The production Dockerfiles carry GHCR source labels, triggering both initial
-publications through normal component version detection.
-Both packages must be public for anonymous Kubernetes pulls.
+The server package must be public for anonymous Kubernetes pulls.
+`build-client` produces a static artifact, tested by Playwright and archived by
+`publish-client`. Deployment rewrites document asset URLs to public Azure Blob
+storage, uploads assets before index HTML and retains previous hashed bundles.
+Production uses spring-app 37.0.0 and static-client-app 5.0.0 with gateway auth
+and `--reset-values`; there is no client container. Nginx serves test files only.
+Keep the library-app-pvc name, volume binding and storage mount on chart changes.
 
-### Environment Config
-- Server exposes `/api/environment` endpoint
-- Client fetches config before bootstrap
-- Conditionally enables MSAL based on `mockAuth` flag
+### Browser configuration and tests
+- Faro's `library-client` name and same-origin `/_telemetry/collect` URL are
+  compiled into the bundle. No runtime config endpoint or document injection.
+- Profile comes from `/oauth2/userinfo`; a 401 enters gateway login with the
+  current deep link. Browser code never stores or refreshes OAuth tokens.
+- App E2E fixtures substitute gateway bearer injection and userinfo, while
+  retaining backend JWT/CSRF validation. Gateway behavior belongs to the shared
+  chart suites. `node test/static-assets.mjs` verifies real cross-origin asset
+  loading, lazy routes, CORS, credentials, fonts, manifest and Faro.
+- See `docs/gateway-static-hosting.md` for the coordinated p07 rollout.

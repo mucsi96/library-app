@@ -14,7 +14,6 @@ import {
   signal,
 } from '@angular/core';
 import { filter, firstValueFrom, map, tap } from 'rxjs';
-import { AuthService } from './auth.service';
 import { ImportJob, isSettled } from './import-job';
 import { ItemsService } from './items.service';
 import { SKIP_ERROR_NOTIFICATION } from './utils/error.interceptor';
@@ -28,20 +27,13 @@ const POLL_INTERVAL_MS = 1500;
 export class ImportJobsService {
   private readonly http = inject(HttpClient);
   private readonly itemsService = inject(ItemsService);
-  private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
-  // The queue is shown from the app shell, which lives outside the auth
-  // guard, so the poll waits for a session and never notifies on failure -
-  // a dropped background poll is not something to interrupt the user with.
-  readonly jobs = resource<ImportJob[], { authenticated: boolean }>({
-    params: () => ({ authenticated: this.auth.isAuthenticated() }),
-    loader: ({ params }) =>
-      params.authenticated
-        ? fetchJson<ImportJob[]>(this.http, '/api/import-jobs', {
-            context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true),
-          })
-        : Promise.resolve([]),
+  // Document authentication completes before the app starts.
+  readonly jobs = resource({
+    loader: () => fetchJson<ImportJob[]>(this.http, '/api/import-jobs', {
+      context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true),
+    }),
   });
 
   /** Percentage of the photo upload in flight, null when idle. */

@@ -82,7 +82,7 @@ export async function configureMockOpenAI(
     failWith?: { status: number; count: number; retryAfter?: number };
   } = {}
 ) {
-  await fetch('http://localhost:3070/reset', {
+  await fetch(`${process.env.TEST_OPENAI_URL ?? 'http://localhost:3070'}/reset`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),

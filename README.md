@@ -24,11 +24,11 @@ again. Based on the patterns from
 
 ## Patterns Covered
 
-- **CI/CD Pipeline** - GitHub Actions with E2E testing and image publishing
-- **Deployment** - Docker multi-stage builds with Traefik reverse proxy
+- **CI/CD Pipeline** - GitHub Actions with E2E testing, native API images and tested static client artifacts
+- **Deployment** - Gateway-authenticated Azure static hosting and Traefik API routing
 - **Client** - Angular with Material UI dark theme
 - **Server** - Spring Boot 4 with Java 21, compiled ahead of time into a GraalVM native image
-- **Authentication** - Azure AD (MSAL) with conditional mock auth for testing
+- **Authentication** - Entra/oauth2-proxy HttpOnly sessions with backend JWT/role and CSRF validation
 - **Configuration** - Azure Key Vault + Spring profiles (prod/local/test)
 - **Database** - PostgreSQL with Spring Data JPA
 - **AI integration** - OpenAI GPT-5 (vision) via Spring AI and
@@ -101,3 +101,13 @@ scripts/pod_up.sh
 # Run E2E tests
 cd test && npm test
 ```
+
+The test fixture supplies gateway identity via the mock OIDC issuer; the test
+pod does not run a production OAuth session gateway. For manual local browsing,
+use a local gateway session setup rather than placing tokens in browser storage.
+Run `node --test scripts/prepare-client.test.mjs` and
+`node test/static-assets.mjs` from the repository root to check publication and
+cross-origin browser asset loading after building the client.
+
+See [gateway/static hosting](docs/gateway-static-hosting.md) for the architecture
+and coordinated infrastructure rollout.
