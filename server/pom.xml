@@ -109,7 +109,7 @@
     <dependency>
       <groupId>com.openai</groupId>
       <artifactId>openai-java-client-okhttp</artifactId>
-      <version>4.91.0</version>
+      <version>4.96.0</version>
     </dependency>
     <!-- Required by Spring AI's BeanOutputConverter (structured output) -->
     <dependency>
@@ -156,7 +156,7 @@
       <dependency>
         <groupId>com.azure</groupId>
         <artifactId>azure-core</artifactId>
-        <version>1.60.0</version>
+        <version>1.61.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
