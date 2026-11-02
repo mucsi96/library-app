@@ -437,7 +437,8 @@ digests.
 The server package must be public for anonymous Kubernetes pulls.
 `build-client` produces a static artifact, tested by Playwright and archived by
 `publish-client`. Deployment rewrites document asset URLs to public Azure Blob
-storage, uploads assets before index HTML and retains previous hashed bundles.
+storage, empties `$web` and `assets`, then uploads the latest assets before index HTML.
+Deployment downtime is intentional; previous bundles are removed.
 Production uses spring-app 37.0.0 and static-client-app 5.0.0 with gateway auth
 and `--reset-values`; there is no client container. Nginx serves test files only.
 Keep the library-app-pvc name, volume binding and storage mount on chart changes.
