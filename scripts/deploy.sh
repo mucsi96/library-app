@@ -41,12 +41,9 @@ helm show chart mucsi96/static-client-app --version "$staticClientAppChartVersio
 
 echo "Deploying server: $SERVER_IMAGE using spring-app chart $springAppChartVersion"
 
-# The server is a GraalVM native executable, so there is no JVM metaspace, no
-# code cache and no JIT-compiled code to hold: it idles far below what the
-# 512Mi request assumed for the JRE image, hence the smaller request. The
-# request is what the scheduler reserves around the clock, so it is sized for
-# idle. Over 36h in production RSS averaged 100Mi and peaked at 136Mi; the
-# working set peaked at 216Mi.
+# The 2026-11-06 p07 audit measured a 169Mi median working set over 77h.
+# Reserve 208Mi (23% above that baseline); RSS alone reached 149Mi, already
+# above the former 128Mi request, before accounting for active file pages.
 #
 # The limit is the opposite question and stays where it is: it has to cover the
 # idle footprint plus the 512Mi heap the image is capped at, which an import
@@ -70,7 +67,7 @@ helm upgrade $SERVER_RELEASE_NAME mucsi96/spring-app \
     --set persistentVolumeClaims[0].mountPath=/app/storage \
     --set persistentVolumeClaims[0].storageClassName="" \
     --set persistentVolumeClaims[0].storage=5Gi \
-    --set resources.requests.memory=128Mi \
+    --set resources.requests.memory=208Mi \
     --set resources.requests.cpu=100m \
     --set resources.limits.memory=768Mi \
     --set resources.limits.cpu=500m \
