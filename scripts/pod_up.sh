@@ -9,9 +9,7 @@ if [ "${SKIP_BUILD:-}" = "1" ]; then
   echo "Skipping image build (SKIP_BUILD=1)..."
 else
   echo "Building container images..."
-  # The Spring profile is baked into the native executable during AOT
-  # processing, so the pod image has to be built with the test profile.
-  podman build --build-arg SPRING_PROFILE=test \
+  podman build \
     -t localhost/library-app-server:test "$PROJECT_DIR/server" &
   server_build=$!
   (cd "$PROJECT_DIR/client" && npm ci && npm run build) &
@@ -79,13 +77,7 @@ for container in $CONTAINERS; do
   wait_healthy "$container"
 done
 
-# The server has now migrated an empty database. A deployment to production
-# starts against a database that already carries the changelog, and that is a
-# different code path in the native executable: Liquibase recomputes the
-# checksum of every applied changeset before anything runs, reaching
-# reflection that a first migration never touches (see LiquibaseNativeHints).
-# Restart the server once so the pod exercises that path too - the executable
-# is serving again within a second, so this costs nothing noticeable.
+# Exercise startup against an already migrated database as on redeployment.
 echo "Restarting the server against the migrated database..."
 podman restart "$POD_NAME-server" > /dev/null
 wait_healthy "$POD_NAME-server"
