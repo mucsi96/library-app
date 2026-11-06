@@ -3,6 +3,7 @@ import { Link, Route, Routes, useLocation } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppHeader, AppHeaderActions, AppMain, BarLoader } from '@mucsi96/react-ui';
 import { HeaderProfile } from './HeaderProfile';
+import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 import { jobsQuery, itemsQuery } from './queries';
 import styles from './App.module.css';
 
@@ -42,13 +43,13 @@ export function App() {
         <HeaderProfile />
       </AppHeaderActions>
     </AppHeader>
-    <AppMain><Suspense fallback={<BarLoader label="Loading page" />}>
+    <AppMain><RouteErrorBoundary key={location.pathname}><Suspense fallback={<BarLoader label="Loading page" />}>
       <Routes>
         <Route path="/" element={<Items />} />
         <Route path="/import" element={<Import />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<><h1>Page not found</h1><Link to="/">My loans</Link></>} />
       </Routes>
-    </Suspense></AppMain>
+    </Suspense></RouteErrorBoundary></AppMain>
   </>;
 }

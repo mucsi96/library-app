@@ -37,6 +37,36 @@ test.afterAll(async () => {
   if (directory) await rm(directory, { recursive: true, force: true });
 });
 
+for (const navigate of [false, true]) {
+  test(`failed lazy route recovers after reload on ${navigate ? 'navigation' : 'a deep link'}`, async ({ page, context }) => {
+    await context.grantPermissions(['local-network-access']);
+    await page.route('http://localhost:8150/**', async route => {
+      if (route.request().resourceType() === 'document') {
+        await route.fulfill({ contentType: 'text/html', body: html });
+      } else {
+        await route.fallback();
+      }
+    });
+    const chunk = /chunk-Settings-.*\.js$/;
+    await page.route(chunk, route => route.abort());
+    if (navigate) {
+      await page.goto('/');
+      await expect(page.getByRole('heading', { name: 'My loans' })).toBeVisible();
+      await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    } else {
+      await page.goto('/settings?source=recovery#libraries');
+    }
+    await expect(page.getByRole('alert')).toContainText('Unable to load this page');
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    const deepLink = page.url();
+    await page.unroute(chunk);
+    await page.getByRole('button', { name: 'Reload page' }).click();
+    await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+    await expect(page.getByRole('alert')).not.toBeVisible();
+    await expect(page).toHaveURL(deepLink);
+  });
+}
+
 test('published document loads real cross-origin bundles, lazy routes and manifest without credentials', async ({ page, context }) => {
   // The substitute Blob server is on loopback; Chromium gates local-network
   // requests separately from CORS. Production assets are on a public origin.
