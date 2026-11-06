@@ -450,6 +450,5 @@ Keep the library-app-pvc name, volume binding and storage mount on chart changes
   current deep link. Browser code never stores or refreshes OAuth tokens.
 - App E2E fixtures substitute gateway bearer injection and userinfo, while
   retaining backend JWT/CSRF validation. Gateway behavior belongs to the shared
-  chart suites. `node test/static-assets.mjs` verifies real cross-origin asset
-  loading, lazy routes, CORS, credentials, fonts, manifest and Faro.
+  chart suites.
 - See `docs/gateway-static-hosting.md` for the coordinated p07 rollout.
