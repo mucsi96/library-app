@@ -47,6 +47,9 @@ Skeleton sync: follow `.github/prompts/sync-skeleton.md` in a weekly scheduled t
 - Use `@mucsi96/react-ui` controls and semantic button tones, with colocated CSS
   Modules and public `--bt-*` tokens
 - Lazy route components; domain helpers in `client/src/domain`
+- Keep lazy routes inside the route error boundary so a failed bundle download
+  offers a document reload (React caches rejected lazy imports) while navigation
+  stays usable. Preserve the deep link on reload.
 - Verify behavior through Playwright, not React unit/component tests
 
 ## Design
