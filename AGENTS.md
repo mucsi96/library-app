@@ -39,20 +39,19 @@ Skeleton sync: follow `.github/prompts/sync-skeleton.md` in a weekly scheduled t
 - Use semantic selectors (getByText, getByLabel)
 - E2E tests with Playwright
 
-## Angular Style
+## React Style
 
-- Use Angular Material components
-- Follow `@mucsi96/angular-material-theme`'s documented button-color API: use `bt-color="primary|success|warn|error"` on `mat-flat-button`, `mat-raised-button`, `mat-fab` (including extended FABs), and `mat-mini-fab`, including anchor buttons. Use `[attr.bt-color]` for dynamic tones; no directive import is needed.
-- Solid buttons default to primary. Use `error` for destructive actions, `warn` for caution, and `success` for positive outcomes. Material's legacy `color="warn"` means error/red, not the theme's orange `bt-color="warn"`; migrate solid buttons accordingly.
-- For an arbitrary solid-button color, set only `--bt-button-bg` without `bt-color`. Let the theme derive label contrast and hover colors; do not override Material container/label/state-layer color tokens, `--mat-sys-primary`, or button `background`, `color`, and `:hover` separately. Keep the intended button variant; raised buttons support the same API and retain elevation.
-- The `bt-color` API does not cover text, outlined, icon, or menu buttons. Use their documented Material APIs instead; do not apply solid-button color workarounds to them. Check the installed theme README when upgrading or changing component styles.
-- Use signals and resources (not rxjs where possible)
-- Use string literals over enums
-- Standalone components
+- Function components and hooks; TanStack Query for server state
+- Validate API responses with Zod; keep credentials at the gateway and send the
+  host-only CSRF proof on same-origin mutations, including photo uploads
+- Use `@mucsi96/react-ui` controls and semantic button tones, with colocated CSS
+  Modules and public `--bt-*` tokens
+- Lazy route components; domain helpers in `client/src/domain`
+- Verify behavior through Playwright, not React unit/component tests
 
 ## Design
 
-- Material UI dark theme
+- `@mucsi96/react-ui` dark theme
 - Skeleton loaders for loading states
 
 ## Project Overview
@@ -119,7 +118,7 @@ Application for tracking books and CDs borrowed from libraries:
 
 ## Architecture
 
-- **client/** - Angular SPA with Material UI, gateway cookie authentication
+- **client/** - React/Vite SPA with react-ui, gateway cookie authentication
 - **server/** - Spring Boot REST API with PostgreSQL
 - **mock_openai_server/** - Express mock of the OpenAI API for E2E tests
 - **test/** - Playwright E2E tests
@@ -130,7 +129,7 @@ Application for tracking books and CDs borrowed from libraries:
 
 - Spring Boot 4, Java 21 (built into a GraalVM native image)
 - Spring AI (GPT-5 vision extraction) + OpenAI Java SDK (gpt-image-2 edits)
-- Angular 22
+- React 19, Vite, TanStack Query and Zod
 - PostgreSQL 17
 - Entra/oauth2-proxy gateway sessions; API JWT authorization
 - Azure Key Vault for secrets
@@ -144,6 +143,8 @@ Application for tracking books and CDs borrowed from libraries:
 ```bash
 cd client && npm start        # Start dev server
 cd client && npm run build    # Production build
+cd client && npm run lint     # ESLint including hooks rules
+cd client && npm run typecheck # Strict TypeScript
 ```
 
 ### Backend
@@ -235,10 +236,10 @@ cd test && npx playwright test --ui  # Interactive test runner
 
 - App roles `readItems` (queries) and `writeItems` (mutations) are enforced via
   `@PreAuthorize`; the `api-access` scope is required for all protected routes
-- Gateway sessions authenticate documents before Angular starts; the gateway
+- Gateway sessions authenticate documents before React starts; the gateway
   strips browser credentials and supplies the API bearer token. Spring still
   validates issuer, audience, scope and roles. Mutations require the
-  `__Host-XSRF-TOKEN` cookie and Angular's matching `X-XSRF-TOKEN` header, even
+  `__Host-XSRF-TOKEN` cookie and the client's matching `X-XSRF-TOKEN` header, even
   with bearer authentication. Keep the explicit CsrfFilter matcher override.
 
 ## Configuration Patterns
@@ -451,4 +452,7 @@ Keep the library-app-pvc name, volume binding and storage mount on chart changes
 - App E2E fixtures substitute gateway bearer injection and userinfo, while
   retaining backend JWT/CSRF validation. Gateway behavior belongs to the shared
   chart suites.
+- `test/tests/static-assets.spec.ts` serves the production artifact from a
+  separate origin and verifies lazy routes, CORS, credential omission, manifest
+  navigation and same-origin Faro.
 - See `docs/gateway-static-hosting.md` for the coordinated p07 rollout.

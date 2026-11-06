@@ -1,0 +1,11 @@
+:root { --bt-app-max-width: 75rem; --bt-app-content-gap: 2rem; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bt-surface-0); color: var(--bt-text-default); }
+a { color: var(--bt-link); }
+button, input { font: inherit; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--bt-primary); outline-offset: 3px; }
+h1 { font-size: 1.8rem; font-weight: 500; margin: 0 0 1.5rem; }
+h2 { font-size: 1.3rem; font-weight: 500; }
+h3 { font-size: 1rem; font-weight: 500; }
+input { color-scheme: dark; }

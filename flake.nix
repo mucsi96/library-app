@@ -20,7 +20,7 @@
         packages = [
           pkgs.temurin-bin-21   # JDK 21 (Temurin), matching the previous SDKMAN install
           pkgs.maven
-          pkgs.nodejs_22        # matches the Node version used in CI
+          pkgs.nodejs_24        # React/Vite tooling requires Node 24 or newer
           pkgs.jq
           pkgs.kubectl
           pkgs.kubernetes-helm

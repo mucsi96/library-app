@@ -1,0 +1,6 @@
+.hint { max-width: 48rem; color: var(--bt-text-muted); line-height: 1.6; }
+.photos { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 2rem; }
+.photo { display: flex; flex: 1 1 15rem; max-width: 24rem; min-height: 12rem; flex-direction: column; gap: 1rem; justify-content: center; align-items: center; padding: 1.5rem; border: 1px dashed var(--bt-outline); border-radius: 1rem; }
+.photo img { width: 100%; height: 16rem; object-fit: contain; }
+.input { display: none; }
+.actions { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-block: 1.5rem; }

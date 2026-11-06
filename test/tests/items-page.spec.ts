@@ -265,10 +265,11 @@ test('sets a new due date for several selected items at once', async ({
   await page.goto('/');
   await page.getByRole('button', { name: 'Select', exact: true }).click();
 
-  await page.getByRole('checkbox', { name: 'Select "Kommissar Pfote"' }).check();
+  // React Aria's input is visually hidden; use its keyboard interaction.
+  await page.getByRole('checkbox', { name: 'Select "Kommissar Pfote"' }).press('Space');
   await page
     .getByRole('checkbox', { name: 'Select "Kei Angscht vor em Hotzeplotz"' })
-    .check();
+    .press('Space');
   await expect(page.getByText('2 items selected')).toBeVisible();
 
   await page.getByRole('button', { name: 'Set due date' }).click();
@@ -317,7 +318,7 @@ test('selects every item matching the quick filters at once', async ({
   await page.goto('/');
   await page.getByRole('option', { name: 'Sihlcity' }).click();
   await page.getByRole('button', { name: 'Select', exact: true }).click();
-  await page.getByRole('checkbox', { name: 'Select all' }).check();
+  await page.getByText('Select all', { exact: true }).click();
 
   await expect(page.getByText('2 items selected')).toBeVisible();
 
@@ -354,7 +355,7 @@ test('offers no due date change while an own item is selected', async ({
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Select', exact: true }).click();
-  await page.getByRole('checkbox', { name: 'Select all' }).check();
+  await page.getByText('Select all', { exact: true }).click();
 
   await expect(
     page.getByText('Own items have no due date. Unselect them to set one.')
@@ -362,7 +363,7 @@ test('offers no due date change while an own item is selected', async ({
   await expect(page.getByRole('button', { name: 'Set due date' })).toBeDisabled();
 
   // Dropping the own item makes the bulk change available again.
-  await page.getByRole('checkbox', { name: 'Select "My own book"' }).uncheck();
+  await page.getByRole('checkbox', { name: 'Select "My own book"' }).press('Space');
   await expect(page.getByText('1 item selected')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Set due date' })).toBeEnabled();
 });
@@ -385,7 +386,7 @@ test('drops items hidden by a filter change out of the selection', async ({
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Select', exact: true }).click();
-  await page.getByRole('checkbox', { name: 'Select all' }).check();
+  await page.getByText('Select all', { exact: true }).click();
   await expect(page.getByText('2 items selected')).toBeVisible();
 
   // The CD leaves the list, so it leaves the selection - and clearing the
