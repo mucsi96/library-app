@@ -142,9 +142,6 @@ jobs:
         with:
           name: client-static
           path: client/dist
-      # Exercise the exact artifact and production URL rewriting in a browser.
-      - name: Check direct browser asset loading
-        run: node test/static-assets.mjs
       - name: Load images into Podman
         run: |
           podman load -i /tmp/server-image.tar

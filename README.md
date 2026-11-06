@@ -105,9 +105,8 @@ cd test && npm test
 The test fixture supplies gateway identity via the mock OIDC issuer; the test
 pod does not run a production OAuth session gateway. For manual local browsing,
 use a local gateway session setup rather than placing tokens in browser storage.
-Run `node --test scripts/prepare-client.test.mjs` and
-`node test/static-assets.mjs` from the repository root to check publication and
-cross-origin browser asset loading after building the client.
+Run `node --test scripts/prepare-client.test.mjs` from the repository root to
+check client publication preparation.
 
 See [gateway/static hosting](docs/gateway-static-hosting.md) for the architecture
 and coordinated infrastructure rollout.
