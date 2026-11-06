@@ -1,0 +1,6 @@
+.date { display: grid; gap: .5rem; }
+.date input { background: var(--bt-surface-2); border: 1px solid var(--bt-outline); border-radius: .5rem; color: var(--bt-text-default); padding: .8rem; }
+.items { padding-left: 1.2rem; }
+.items li { margin-block: .7rem; }
+.items span { display: block; color: var(--bt-text-muted); font-size: .85rem; }
+.actions { display: flex; justify-content: end; gap: .8rem; }

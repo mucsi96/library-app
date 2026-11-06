@@ -1,0 +1,7 @@
+.queue { margin-block: 1.5rem; }
+.card { display: flex; gap: 1rem; padding: 1rem; margin-bottom: .75rem; border: 1px solid var(--bt-outline); border-radius: .75rem; background: var(--bt-surface-1); }
+.body { flex: 1; min-width: 0; }
+.title { margin: 0; font-weight: 500; }
+.author { color: var(--bt-text-muted); margin-block: .4rem; }
+.error { color: var(--bt-error); }
+.actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; }

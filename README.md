@@ -26,7 +26,7 @@ again. Based on the patterns from
 
 - **CI/CD Pipeline** - GitHub Actions with E2E testing, native API images and tested static client artifacts
 - **Deployment** - Gateway-authenticated Azure static hosting and Traefik API routing
-- **Client** - Angular with Material UI dark theme
+- **Client** - React, Vite and TypeScript with `@mucsi96/react-ui`, TanStack Query, Zod and CSS Modules
 - **Server** - Spring Boot 4 with Java 21, compiled ahead of time into a GraalVM native image
 - **Authentication** - Entra/oauth2-proxy HttpOnly sessions with backend JWT/role and CSRF validation
 - **Configuration** - Azure Key Vault + Spring profiles (prod/local/test)
@@ -60,7 +60,7 @@ All host-exposed ports use the **xx50–xx59** range for their last two digits t
 
 | Port | Service              | Context                             |
 |------|----------------------|-------------------------------------|
-| 4250 | Angular dev server   | Local dev                           |
+| 4250 | Vite dev server      | Local dev                           |
 | 5450 | PostgreSQL           | Dev database                        |
 | 5451 | PostgreSQL           | Test pod                            |
 | 3070 | Mock OpenAI server   | Test pod                            |
@@ -93,6 +93,24 @@ cannot provide). On WSL, enable `systemd=true` in `/etc/wsl.conf` and install it
 via your distro, e.g. `apt install podman`.
 
 ## Quick Start
+
+The frontend requires Node.js 24 or newer:
+
+```bash
+cd client
+npm ci
+npm start           # Vite on port 4250; API and gateway requests stay same-origin
+npm run lint
+npm run typecheck
+npm run build       # Tested static artifact in client/dist
+```
+
+React function components own interaction state; TanStack Query owns API state
+and import polling, and Zod validates API responses. Routes (`/`, `/import`,
+`/settings`) are lazy-loaded. Domain helpers live in `client/src/domain`, with
+component styles colocated as CSS Modules. No frontend unit tests are required:
+Playwright covers the user journeys, keyboard/mobile interactions, error recovery,
+and real cross-origin static asset loading.
 
 ```bash
 # Start test stack

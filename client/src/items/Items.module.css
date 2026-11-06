@@ -1,0 +1,33 @@
+.actions { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
+.table { width: 100%; border-collapse: collapse; text-align: left; }
+.table th { font-weight: 500; color: var(--bt-text-muted); }
+.table td, .table th { padding: .75rem .5rem; border-bottom: 1px solid var(--bt-outline); }
+.table tr[data-selected="true"] { background: var(--bt-surface-2); }
+.titleButton { background: none; color: var(--bt-text-strong); border: none; text-align: left; padding: .5rem 0; cursor: pointer; font-weight: 500; }
+.author { display: block; color: var(--bt-text-muted); font-size: .85rem; margin-top: .3rem; font-weight: 400; }
+.statusChip { background: #344358; color: #d8e6ff; border: 0; border-radius: 1rem; padding: .6rem .8rem; cursor: pointer; white-space: nowrap; }
+.statusChip[data-status="NOT_STARTED"] { background: #44404b; color: #ece3ef; }
+.statusChip[data-status="READING"] { background: #51421f; color: #ffe4a0; }
+.statusChip[data-status="READ"] { background: #244d37; color: #b5f5cb; }
+.statusChip[data-status="READ_RETURNED"] { background: #273e3d; color: #b8d9d4; }
+.statusChip[data-status="UNREAD_RETURNED"] { background: #4b3037; color: #f1c2cc; }
+.due { white-space: nowrap; font-size: .85rem; }
+.overdue, .soon { padding: .4rem .6rem; border-radius: 1rem; display: inline-block; }
+.overdue { background: var(--bt-error-soft); color: var(--bt-error); }
+.soon { background: var(--bt-warn-soft); color: var(--bt-warn); }
+.selectionBar { position: sticky; bottom: 0; background: var(--bt-surface-2); border: 1px solid var(--bt-outline); border-radius: 1rem; padding: .8rem 1rem max(.8rem, env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1rem; box-shadow: var(--bt-shadow); }
+.selectionBar p { margin: 0; }
+.selectionBar button { margin-left: auto; }
+@media (max-width: 700px) {
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .table, .table tbody { display: block; }
+  .table tr { display: grid; grid-template-columns: auto 1fr auto; gap: .4rem .6rem; padding: .9rem 0; border-bottom: 1px solid var(--bt-outline); }
+  .table td { border: 0; padding: 0; }
+  .cover { grid-column: 1; grid-row: 1 / 4; }
+  .title { grid-column: 2 / 4; grid-row: 1; }
+  .type { grid-column: 2; grid-row: 2; font-size: .8rem; color: var(--bt-text-muted); }
+  .library { grid-column: 2; grid-row: 3; font-size: .8rem; }
+  .due { grid-column: 2; grid-row: 4; }
+  .status { grid-column: 3; grid-row: 4; }
+  .select { grid-column: 1; grid-row: 4; }
+}
