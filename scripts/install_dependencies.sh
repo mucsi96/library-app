@@ -7,8 +7,8 @@ set -e  # Exit immediately if a command exits with a non-zero status
 # `.envrc`. Podman is a distro-level prerequisite (e.g. `apt install podman` on
 # WSL). This script only installs the per-project dependencies.
 
-echo "Building server..."
-cd server && mvn clean install && cd ..
+echo "Fetching server dependencies..."
+cd server && cargo fetch --locked && cd ..
 
 echo "Installing client dependencies..."
 cd client && npm install && cd ..

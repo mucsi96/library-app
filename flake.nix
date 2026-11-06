@@ -18,8 +18,10 @@
         # rootless Podman relies on setuid newuidmap/newgidmap helpers and
         # /etc/subuid mappings that a Nix store binary cannot provide.
         packages = [
-          pkgs.temurin-bin-21   # JDK 21 (Temurin), matching the previous SDKMAN install
-          pkgs.maven
+          pkgs.rustup
+          pkgs.pkg-config
+          pkgs.cmake
+          pkgs.openssl
           pkgs.nodejs_24        # React/Vite tooling requires Node 24 or newer
           pkgs.jq
           pkgs.kubectl
@@ -28,8 +30,7 @@
         ];
 
         shellHook = ''
-          export JAVA_HOME="${pkgs.temurin-bin-21}"
-          echo "library-app dev shell: jdk21 (Temurin), maven, node $(node --version), jq, kubectl, helm, az"
+          echo "library-app dev shell: rustup, node $(node --version), jq, kubectl, helm, az"
           echo "Podman is a distro-level prerequisite (e.g. 'apt install podman' on WSL) and is not provided by this flake."
         '';
       };
