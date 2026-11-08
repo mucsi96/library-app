@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { BarLoader, Button, Checkbox } from '@mucsi96/react-ui';
+import { LoadingArea, Button, Checkbox } from '@mucsi96/react-ui';
 import type { LoanItem } from '../api';
 import { itemsQuery } from '../queries';
 import { ALL_STATUSES, mediaTypeLabel, statusLabel } from '../domain/status-label';
@@ -49,7 +49,7 @@ export default function Items() {
   return <>
     <h1>My loans</h1>
     <ImportQueue />
-    {query.isPending && <BarLoader label="Loading loans" />}
+    {query.isPending && <LoadingArea label="Loading loans" fill />}
     {query.isError && <QueryError error={query.error} retry={() => { void query.refetch(); }} />}
     {query.isSuccess && (items.length === 0 ? <p>No items yet. <Link to="/import">Import an item</Link> to get started.</p> : <>
       <Chips label="Filter by type" options={(['BOOK', 'CD', 'DVD'] as const).map(value => ({ value, label: mediaTypeLabel(value) }))} value={filters.type} onChange={value => filter('type', value)} />

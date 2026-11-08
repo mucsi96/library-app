@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BarLoader, Dialog } from '@mucsi96/react-ui';
+import { LoadingArea, Dialog } from '@mucsi96/react-ui';
 import { fetchJson, itemSchema, jsonBody, type LoanItem } from '../api';
 import { itemsQuery, librariesQuery } from '../queries';
 import { LOAN_STATUSES, OWN_STATUSES, mediaTypeLabel, statusLabel } from '../domain/status-label';
@@ -34,7 +34,7 @@ export function ItemDetails({ item, onClose }: { item: LoanItem; onClose: () => 
     <Chips label="Status" options={(item.library === null ? OWN_STATUSES : LOAN_STATUSES).map(value => ({ value, label: statusLabel(value, item.mediaType) }))}
       value={item.status} disabled={update.isPending} onChange={value => { if (value !== item.status) update.mutate({ field: 'status', value }); }} />
     <h3>Library</h3>
-    {libraries.isPending && <BarLoader label="Loading libraries" />}
+    {libraries.isPending && <LoadingArea label="Loading libraries" />}
     {libraries.isError && <QueryError error={libraries.error} retry={() => { void libraries.refetch(); }} />}
     {libraries.isSuccess && <Chips label="Library" options={[...libraries.data.map(library => ({ value: `library:${library.id}`, label: library.name })), { value: 'own', label: 'My own' }]}
       value={selectedLibrary} disabled={update.isPending}

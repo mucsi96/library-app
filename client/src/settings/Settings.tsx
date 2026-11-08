@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BarLoader, Button, TextField } from '@mucsi96/react-ui';
+import { LoadingArea, Button, TextField } from '@mucsi96/react-ui';
 import { z } from 'zod';
 import { fetchJson, jsonBody, librarySchema } from '../api';
 import { librariesQuery } from '../queries';
@@ -30,7 +30,7 @@ export default function Settings() {
       </form>
       {add.isError && <QueryError error={add.error} />}
       {remove.isError && <QueryError error={remove.error} />}
-      {libraries.isPending && <BarLoader label="Loading libraries" />}
+      {libraries.isPending && <LoadingArea label="Loading libraries" />}
       {libraries.isError && <QueryError error={libraries.error} retry={() => { void libraries.refetch(); }} />}
       {libraries.isSuccess && <ul className={styles.list}>
         {libraries.data.length === 0 ? <li>No libraries yet. Add the ones you borrow from.</li> : libraries.data.map(library => <li key={library.id}>

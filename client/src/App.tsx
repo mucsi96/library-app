@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AppHeader, AppHeaderActions, AppMain, BarLoader } from '@mucsi96/react-ui';
+import { AppHeader, AppHeaderActions, AppMain, LoadingArea } from '@mucsi96/react-ui';
 import { HeaderProfile } from './HeaderProfile';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 import { jobsQuery, itemsQuery } from './queries';
@@ -31,7 +31,7 @@ export function App() {
     document.title = ({ '/': 'My loans', '/import': 'Import item', '/settings': 'Settings' })[location.pathname] ?? 'Library App';
   }, [location.pathname]);
 
-  return <>
+  return <div className={styles.layout}>
     <AppHeader>
       <Link to="/" className={styles.brand}>Library App</Link>
       <AppHeaderActions>
@@ -43,7 +43,7 @@ export function App() {
         <HeaderProfile />
       </AppHeaderActions>
     </AppHeader>
-    <AppMain><RouteErrorBoundary key={location.pathname}><Suspense fallback={<BarLoader label="Loading page" />}>
+    <AppMain className={styles.main}><RouteErrorBoundary key={location.pathname}><Suspense fallback={<LoadingArea label="Loading page" fill />}>
       <Routes>
         <Route path="/" element={<Items />} />
         <Route path="/import" element={<Import />} />
@@ -51,5 +51,5 @@ export function App() {
         <Route path="*" element={<><h1>Page not found</h1><Link to="/">My loans</Link></>} />
       </Routes>
     </Suspense></RouteErrorBoundary></AppMain>
-  </>;
+  </div>;
 }

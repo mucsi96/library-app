@@ -23,7 +23,7 @@ Skeleton sync: follow `.github/prompts/sync-skeleton.md` in a weekly scheduled t
 - Validate API responses with Zod; keep credentials at the gateway and send the
   host-only CSRF proof on same-origin mutations, including photo uploads.
 - Use `@mucsi96/react-ui` controls and semantic button tones, colocated CSS Modules
-  and public `--bt-*` tokens. Dark theme and skeleton loaders.
+  and public `--bt-*` tokens. Dark theme and shared LoadingArea loaders centered in their page or section.
 - Lazy route components; domain helpers in `client/src/domain`.
 - Keep lazy routes inside the route error boundary so a failed bundle download
   offers a document reload (React caches rejected lazy imports) while navigation
