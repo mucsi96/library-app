@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BarLoader, Button, ProgressBar, useNotifications } from '@mucsi96/react-ui';
+import { LoadingArea, Button, ProgressBar, useNotifications } from '@mucsi96/react-ui';
 import { uploadPhotos } from '../api';
 import { jobsQuery, librariesQuery } from '../queries';
 import { Chips } from '../components/Chips';
@@ -32,7 +32,7 @@ export default function Import() {
     <h1>Import item</h1>
     <p className={styles.hint}>Pick where the item is from, then take a photo of its front and back. The ISBN is read from the photos and a clean cover thumbnail is generated in the background — you can keep going while it works.</p>
     <ImportQueue />
-    {libraries.isPending && <BarLoader label="Loading libraries" />}
+    {libraries.isPending && <LoadingArea label="Loading libraries" />}
     {libraries.isError && <QueryError error={libraries.error} retry={() => { void libraries.refetch(); }} />}
     <Chips label="Item source" options={[...(libraries.data ?? []).map(library => ({ value: `library:${library.id}`, label: library.name })), { value: 'own', label: 'My own' }]}
       value={source} disabled={upload.isPending} onChange={value => setSource(value === source ? null : value)} />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BarLoader, Button, TextField } from '@mucsi96/react-ui';
+import { LoadingArea, Button, TextField } from '@mucsi96/react-ui';
 import { z } from 'zod';
 import { fetchJson, jobSchema, jsonBody, type ImportJob } from '../api';
 import { jobsQuery } from '../queries';
@@ -54,7 +54,7 @@ function ImportCard({ job }: { job: ImportJob }) {
           {validationError && <QueryError error={validationError} />}
           <div className={styles.actions}><Button type="submit" isDisabled={action.isPending}>Save ISBN</Button>{dismiss}</div>
         </form>}
-      </> : <><p>{progressLabels[job.status]}</p>{job.status !== 'COMPLETED' && <BarLoader label="Import in progress" />}</>}
+      </> : <><p>{progressLabels[job.status]}</p>{job.status !== 'COMPLETED' && <LoadingArea label="Import in progress" />}</>}
     </div>
   </article>;
 }
