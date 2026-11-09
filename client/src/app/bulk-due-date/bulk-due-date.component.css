@@ -1,0 +1,67 @@
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-right: 0.75rem;
+}
+
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--bt-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Tall enough to be a comfortable thumb target on a phone. */
+.date-field input {
+  min-height: 48px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--bt-outline);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bt-text-strong);
+  font: inherit;
+}
+
+.date-preview {
+  margin: 0.5rem 0 0;
+  color: var(--bt-text-muted);
+  font-size: 0.875rem;
+}
+
+.selected-items {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.selected-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.selected-title {
+  color: var(--bt-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.selected-library {
+  color: var(--bt-text-muted);
+  white-space: nowrap;
+}
+
+mat-dialog-actions {
+  gap: 0.5rem;
+}
+
+mat-dialog-actions button {
+  flex: 1 1 8rem;
+  min-height: 48px;
+}

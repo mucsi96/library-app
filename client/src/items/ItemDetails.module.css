@@ -1,4 +1,0 @@
-.details { display: grid; gap: .8rem; }
-.details div { display: grid; grid-template-columns: 5rem 1fr; gap: 1rem; }
-.details dt { color: var(--bt-text-muted); }
-.details dd { margin: 0; overflow-wrap: anywhere; }

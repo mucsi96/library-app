@@ -2,12 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "lldb",
+      "type": "java",
       "name": "Start server",
       "request": "launch",
       "cwd": "${workspaceFolder}/server",
-      "cargo": { "args": ["build", "--manifest-path", "${workspaceFolder}/server/Cargo.toml"] },
-      "args": ["start", "--environment", "development"]
+      "mainClass": "io.github.mucsi96.libraryapp.LibraryAppApplication",
+      "args": "--spring.profiles.active=local",
+      "env": {
+        "AZURE_KEYVAULT_ENDPOINT": "https://p06-library.vault.azure.net"
+      }
     }
   ]
 }
