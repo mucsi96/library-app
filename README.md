@@ -17,7 +17,7 @@ again. Based on the patterns from
   know what not to borrow again
 - **Photo import** - Photograph the front and back of a borrowed item
   (on iPhone the camera opens directly); GPT-5 reads the ISBN, title,
-  author and media type from the photos (the source library is picked explicitly), and gpt-image-2 generates a
+  author and library branch from the photos, and gpt-image-2 generates a
   clean cover thumbnail with the library markings removed. Items are
   matched by ISBN so re-imports refresh due dates instead of creating
   duplicates
@@ -26,49 +26,33 @@ again. Based on the patterns from
 
 - **CI/CD Pipeline** - GitHub Actions with E2E testing, native API images and tested static client artifacts
 - **Deployment** - Gateway-authenticated Azure static hosting and Traefik API routing
-- **Client** - React, Vite and TypeScript with `@mucsi96/react-ui`, TanStack Query, Zod and CSS Modules
-- **Server** - Rust/Loco with SeaORM, compiled into a native distroless image
+- **Client** - Angular with Material UI dark theme
+- **Server** - Spring Boot 4 with Java 21, compiled ahead of time into a GraalVM native image
 - **Authentication** - Entra/oauth2-proxy HttpOnly sessions with backend JWT/role and CSRF validation
-- **Configuration** - Azure Key Vault workload identity + Loco runtime environments
-- **Database** - PostgreSQL with SeaORM models and migrations
-- **AI integration** - OpenAI GPT-5 (vision) and gpt-image-2 over typed HTTP clients,
-  with a mock OpenAI server
+- **Configuration** - Azure Key Vault + Spring profiles (prod/local/test)
+- **Database** - PostgreSQL with Spring Data JPA
+- **AI integration** - OpenAI GPT-5 (vision) via Spring AI and
+  gpt-image-2 via the official OpenAI Java SDK, with a mock OpenAI server
   for tests
 - **Testing** - Playwright E2E tests
 
-## Backend runtime
+## One image per Spring profile
 
-One native image serves development, test and production. Loco reads the runtime
-environment from `LOCO_ENV` (or `--environment`). Production loads `db-url`,
-`db-username`, `db-password`, `tenant-id`, `api-client-id` and `openai-api-key`
-from `AZURE_KEYVAULT_ENDPOINT` using Azure workload identity. Existing JDBC-form
-PostgreSQL URLs remain supported in Key Vault. Storage uses `STORAGE_DIRECTORY`.
+The server is shipped as a GraalVM native executable. Bean definitions are
+resolved during ahead-of-time processing at build time, so the active Spring
+profile is baked into the executable and cannot be chosen at startup any more.
+The server image is therefore built once per profile, via the `SPRING_PROFILE`
+build argument:
 
 ```bash
-podman build -t localhost/library-app-server:test server
-cd server
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --locked -- -D warnings
-cargo build --release --locked
+podman build --build-arg SPRING_PROFILE=test -t library-app-server:test server   # e2e pod
+podman build --build-arg SPRING_PROFILE=prod -t library-app-server:prod server   # published image
 ```
 
-For local development, set `DATABASE_URL` (for example
-`postgresql://postgres:postgres@localhost:5450/library`), `OIDC_ISSUER`,
-`API_CLIENT_ID`, `OPENAI_BASE_URL` (normally `https://api.openai.com/v1`),
-`OPENAI_API_KEY` and `STORAGE_DIRECTORY`, then run
-`cargo run -- start --environment development` from `server/`.
-The toolchain is pinned in `server/rust-toolchain.toml`.
-
-`/healthz` reports database readiness. The container also supports `--healthcheck`
-for shell-free probes. Production uses rust-app 7.0.0 with the existing
-`library-app-pvc` and fsGroup 65532 so the nonroot process can write existing files.
-Keep storage mounted at `/app/storage` when upgrading.
-
-The SeaORM baseline creates a fresh database or adopts the deployed `library`
-tables without rewriting rows, IDs, sequences or photos. Existing Liquibase
-metadata is left intact. Never reset/reseed the production database. Import jobs
-retain their UUIDs, staged paths, attempts and extracted fields across upgrades;
-interrupted jobs are recovered by the stale-job sweep.
+`SPRING_PROFILES_ACTIVE` is not read at runtime; the pipeline builds the test
+image for the e2e job and the prod image when publishing to GHCR. Running
+the server on a JVM for local development is unaffected - `mvn spring-boot:run
+-Dspring-boot.run.profiles=local` still selects the profile the usual way.
 
 ## Port Mapping
 
@@ -76,19 +60,20 @@ All host-exposed ports use the **xx50–xx59** range for their last two digits t
 
 | Port | Service              | Context                             |
 |------|----------------------|-------------------------------------|
-| 4250 | Vite dev server      | Local dev                           |
+| 4250 | Angular dev server   | Local dev                           |
 | 5450 | PostgreSQL           | Dev database                        |
 | 5451 | PostgreSQL           | Test pod                            |
 | 3070 | Mock OpenAI server   | Test pod                            |
 | 8050 | Mock OAuth2 provider | Test pod                            |
-| 8053 | Rust/Loco server     | Local dev (VSCode)                  |
-| 8054 | Rust/Loco server     | Test pod (internal, behind Traefik) |
+| 8053 | Spring Boot server   | Local dev (VSCode)                  |
+| 8054 | Spring Boot server   | Test pod (internal, behind Traefik) |
 | 8150 | Traefik (web)        | Test pod                            |
 | 8151 | Traefik (admin)      | Test pod                            |
+| 8152 | Spring Actuator      | Local dev & test                    |
 
 ## Development Environment
 
-System tooling (rustup, Node, jq, kubectl, helm, azure-cli) is provided by
+System tooling (JDK 21, Maven, Node, jq, kubectl, helm, azure-cli) is provided by
 a Nix flake dev shell:
 
 ```bash
@@ -108,24 +93,6 @@ cannot provide). On WSL, enable `systemd=true` in `/etc/wsl.conf` and install it
 via your distro, e.g. `apt install podman`.
 
 ## Quick Start
-
-The frontend requires Node.js 24 or newer:
-
-```bash
-cd client
-npm ci
-npm start           # Vite on port 4250; API and gateway requests stay same-origin
-npm run lint
-npm run typecheck
-npm run build       # Tested static artifact in client/dist
-```
-
-React function components own interaction state; TanStack Query owns API state
-and import polling, and Zod validates API responses. Routes (`/`, `/import`,
-`/settings`) are lazy-loaded. Domain helpers live in `client/src/domain`, with
-component styles colocated as CSS Modules. No frontend unit tests are required:
-Playwright covers the user journeys, keyboard/mobile interactions, error recovery,
-and real cross-origin static asset loading.
 
 ```bash
 # Start test stack

@@ -1,0 +1,30 @@
+<header class="dialog-header">
+  <h2 mat-dialog-title>{{ heading() }}</h2>
+  <button mat-icon-button mat-dialog-close aria-label="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+</header>
+<mat-dialog-content>
+  <label class="date-field">
+    <span>Due date</span>
+    <input type="date" [value]="dueDate()" (input)="onDateInput($event)" />
+  </label>
+  @if (preview(); as label) {
+  <p class="date-preview">{{ label }}</p>
+  }
+
+  <ul class="selected-items">
+    @for (item of items; track item.id) {
+    <li>
+      <span class="selected-title">{{ item.title }}</span>
+      <span class="selected-library">{{ item.library }}</span>
+    </li>
+    }
+  </ul>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-stroked-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button [disabled]="!dueDate()" (click)="save()">
+    Save due date
+  </button>
+</mat-dialog-actions>

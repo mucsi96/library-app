@@ -1,0 +1,43 @@
+<h1>Settings</h1>
+
+<section class="libraries" aria-labelledby="libraries-heading">
+  <h2 id="libraries-heading">Libraries</h2>
+  <p class="hint">
+    The libraries you borrow from. When importing an item you pick one of
+    these — or "My own" for items you bought yourself.
+  </p>
+
+  <form class="add-library" (submit)="add($event)">
+    <input
+      type="text"
+      aria-label="Library name"
+      placeholder="Library name"
+      [value]="name()"
+      (input)="onNameInput($event)"
+    />
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      Add library
+    </button>
+  </form>
+
+  @if (error(); as message) {
+  <p role="alert" class="settings-error">{{ message }}</p>
+  }
+
+  <ul class="library-list">
+    @for (library of libraries(); track library.id) {
+    <li>
+      <span>{{ library.name }}</span>
+      <button
+        mat-icon-button
+        [attr.aria-label]="removeLabel(library)"
+        (click)="remove(library)"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    </li>
+    } @empty {
+    <li class="empty">No libraries yet. Add the ones you borrow from.</li>
+    }
+  </ul>
+</section>

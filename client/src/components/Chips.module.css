@@ -1,4 +1,0 @@
-.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .7rem; }
-.chips button { padding: .55rem .9rem; border: 1px solid var(--bt-outline); border-radius: 2rem; background: var(--bt-surface-2); color: var(--bt-text-default); cursor: pointer; min-height: 40px; }
-.chips button[aria-selected="true"] { background: var(--bt-primary); color: var(--bt-text-on-brand); border-color: transparent; }
-.chips button:disabled { opacity: .6; cursor: wait; }

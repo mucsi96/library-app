@@ -1,0 +1,92 @@
+storage:
+  directory: ${STORAGE_DIRECTORY}
+loan-period-days: 28
+import:
+  poll-interval: PT1S
+  # A job costs at most two provider calls, so this is what bounds our
+  # outbound request rate - across every replica, via the ai_pacer row.
+  min-job-interval: PT2S
+  max-attempts: 5
+  retry-base-delay: PT5S
+  retry-max-delay: PT5M
+  stale-after: PT5M
+  completed-visibility: PT60S
+  retention: P7D
+  sweep-interval: PT1M
+spring:
+  mvc:
+    problemdetails:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 30MB
+  datasource:
+    url: ${db-url}
+    username: ${db-username}
+    password: ${db-password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: CREATE SCHEMA IF NOT EXISTS library
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show-sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: library
+    liquibase-schema: library
+  cloud:
+    azure:
+      keyvault:
+        secret:
+          property-sources:
+            - endpoint: ${AZURE_KEYVAULT_ENDPOINT}
+              enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/${tenant-id:}/v2.0
+          audiences: ${api-client-id:}
+  ai:
+    # Only the chat model is used through Spring AI (the cover thumbnail goes
+    # through the OpenAI SDK directly), so the other OpenAI model
+    # auto-configurations - each wiring up its own client - are switched off.
+    # These are conditions, so they are decided at AOT time and baked into the
+    # native image, which they also keep smaller.
+    model:
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    openai:
+      api-key: ${openai-api-key}
+      # Import jobs own retrying - they can back off across minutes and
+      # survive a restart - so the SDK must not retry underneath them and
+      # multiply the calls we make against a rate limit.
+      max-retries: 0
+      timeout: PT2M
+      chat:
+        options:
+          model: gpt-5
+server:
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /api
+management:
+  server:
+    port: ${SPRING_ACTUATOR_PORT}
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true

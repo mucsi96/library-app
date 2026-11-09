@@ -94,9 +94,6 @@ spec:
 
     - name: server
       image: localhost/library-app-server:test
-      # Rootless Podman's host-mounted fixtures belong to the invoking user.
-      securityContext:
-        runAsUser: 0
       volumeMounts:
         - name: storage
           mountPath: /app/storage
@@ -107,21 +104,24 @@ spec:
           value: mock-key
         - name: OPENAI_BASE_URL
           value: http://localhost:3070
-        - name: LOCO_ENV
-          value: test
-        - name: BINDING
-          value: 0.0.0.0
-        - name: PORT
+        - name: SERVER_PORT
           value: "8054"
-        - name: DATABASE_URL
-          value: postgresql://postgres:postgres@localhost:5432/test
-        - name: OIDC_ISSUER
-          value: http://localhost:8050/default
-        - name: API_CLIENT_ID
-          value: mock-api-client-id
+        - name: SPRING_ACTUATOR_PORT
+          value: "8152"
+        - name: DB_URL
+          value: jdbc:postgresql://localhost:5432/test
+        - name: DB_USERNAME
+          value: postgres
+        - name: DB_PASSWORD
+          value: postgres
       livenessProbe:
-        exec:
-          command: ["/app/library-server", "--healthcheck"]
+        httpGet:
+          path: /actuator/health/readiness
+          port: 8152
+        # The native executable is serving within a second of the container
+        # starting, so there is nothing to wait for before the first probe. The
+        # window stays generous because readiness still waits for the db
+        # container and the Liquibase migration.
         initialDelaySeconds: 2
         periodSeconds: 2
         failureThreshold: 30
