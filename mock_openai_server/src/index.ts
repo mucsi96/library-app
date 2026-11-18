@@ -84,6 +84,11 @@ app.post('/chat/completions', async (req, res) => {
   }
 
   try {
+    if (req.body.response_format?.type !== 'json_schema' ||
+        req.body.response_format.json_schema?.strict !== true ||
+        !req.body.response_format.json_schema?.schema) {
+      throw new Error('A strict structured output schema is required');
+    }
     const result = processMessages(req.body.messages);
     res.status(200).json(result);
   } catch (error) {

@@ -14,6 +14,10 @@ Skeleton sync: follow `.github/prompts/sync-skeleton.md` in a weekly scheduled t
 
 ## General Code Style
 
+- AI task prompts use Persona, Task, Context and Format sections. Text tasks use
+  typed responses and provider-native JSON schemas with field descriptions, not
+  embedded JSON examples. Image tasks retain native image output.
+
 - Avoid fallbacks, prefer failing fast
 - Prefer functional programming patterns
 - Prefer immutable data structures
